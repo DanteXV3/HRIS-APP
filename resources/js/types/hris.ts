@@ -126,4 +126,7 @@ export interface DashboardStats {
     pengajuan_cuti_pending?: number;
     karyawan_baru_bulan_ini?: number;
     total_anggota_tim?: number;
+    belum_absen_hari_ini?: number;
+    karyawan_cuti_hari_ini?: number;
+    form_keluar_hari_ini?: number;
 }

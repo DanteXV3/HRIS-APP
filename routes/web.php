@@ -9,6 +9,8 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\FaceAttendanceController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\ExitPermitController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -58,6 +60,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('payrolls/{payroll}/items/{item}', [PayrollController::class, 'updateItem'])->name('payrolls.updateItem');
         Route::delete('payrolls/{payroll}', [PayrollController::class, 'destroy'])->name('payrolls.destroy');
     });
+
+    // Leave Requests — all authenticated users
+    Route::resource('leaves', LeaveRequestController::class)->only(['index', 'create', 'store', 'show'])->parameters(['leaves' => 'leave']);
+    Route::post('leaves/{leave}/approve', [LeaveRequestController::class, 'approve'])->name('leaves.approve');
+    Route::post('leaves/{leave}/reject', [LeaveRequestController::class, 'reject'])->name('leaves.reject');
+    Route::get('leaves/{leave}/whatsapp', [LeaveRequestController::class, 'whatsappUrl'])->name('leaves.whatsapp');
+
+    // Exit Permits — all authenticated users
+    Route::resource('exit-permits', ExitPermitController::class)->only(['index', 'create', 'store']);
 });
 
 require __DIR__.'/settings.php';

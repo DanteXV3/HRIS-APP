@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, Briefcase, LayoutGrid, MapPin, Users, Receipt, CalendarClock } from 'lucide-react';
+import { Building2, Briefcase, LayoutGrid, MapPin, Users, Receipt, CalendarClock, FileText, DoorOpen } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -68,6 +68,20 @@ export function AppSidebar() {
             },
         );
     }
+
+    // Leave & Exit — visible to all roles
+    mainNavItems.push(
+        {
+            title: 'Pengajuan Cuti',
+            href: '/leaves',
+            icon: FileText,
+        },
+        {
+            title: 'Form Keluar',
+            href: '/exit-permits',
+            icon: DoorOpen,
+        },
+    );
 
     return (
         <Sidebar collapsible="icon" variant="inset">

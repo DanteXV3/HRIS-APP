@@ -17,6 +17,7 @@ class LeaveRequest extends Model
         'tanggal_selesai',
         'jumlah_hari',
         'alasan',
+        'yang_menggantikan',
         'attachment',
         'approved_by_supervisor_id',
         'supervisor_status',

@@ -1,7 +1,7 @@
 import { Head, usePage, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Building2, CalendarPlus, UserPlus, Users, Camera, XCircle, CheckCircle2 } from 'lucide-react';
+import { Building2, CalendarPlus, UserPlus, Users, Camera, XCircle, CheckCircle2, FileText, DoorOpen } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import FaceScanner from '@/components/FaceScanner';
 import { dashboard } from '@/routes';
@@ -171,8 +171,51 @@ export default function Dashboard() {
                     </div>
                 )}
 
-                {(userRole === 'admin' || userRole === 'manager') && (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {/* Quick Action Buttons */}
+                {employee && (
+                    <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+                        <a href="/leaves/create" className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-blue-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-blue-700">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Ajukan Cuti</p>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">Form Cuti / Izin</p>
+                            </div>
+                        </a>
+                        <a href="/exit-permits/create" className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-amber-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-amber-700">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                                <DoorOpen className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Form Keluar</p>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">Izin Keluar Kantor</p>
+                            </div>
+                        </a>
+                        <a href="/leaves" className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-green-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-green-700">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
+                                <CalendarPlus className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Riwayat Cuti</p>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">Lihat Pengajuan</p>
+                            </div>
+                        </a>
+                        <a href="/exit-permits" className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-purple-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-purple-700">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                                <DoorOpen className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Riwayat Keluar</p>
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">Lihat Form Keluar</p>
+                            </div>
+                        </a>
+                    </div>
+                )}
+
+                {/* Admin Stats */}
+                {userRole === 'admin' && (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <StatCard
                             title="Total Karyawan Aktif"
                             value={stats.total_karyawan ?? 0}
@@ -197,31 +240,60 @@ export default function Dashboard() {
                             icon={UserPlus}
                             color="bg-gradient-to-br from-purple-500 to-purple-600"
                         />
+                        <StatCard
+                            title="Karyawan Cuti Hari Ini"
+                            value={stats.karyawan_cuti_hari_ini ?? 0}
+                            icon={CalendarPlus}
+                            color="bg-gradient-to-br from-teal-500 to-teal-600"
+                        />
+                        <StatCard
+                            title="Form Keluar Hari Ini"
+                            value={stats.form_keluar_hari_ini ?? 0}
+                            icon={DoorOpen}
+                            color="bg-gradient-to-br from-rose-500 to-rose-600"
+                        />
                     </div>
                 )}
 
-                {userRole === 'supervisor' && (
+                {/* Manager / Supervisor Stats */}
+                {(userRole === 'manager' || userRole === 'supervisor') && (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <StatCard
-                            title="Anggota Tim"
-                            value={stats.total_anggota_tim ?? 0}
-                            icon={Users}
-                            color="bg-gradient-to-br from-blue-500 to-blue-600"
-                        />
                         <StatCard
                             title="Pengajuan Cuti Pending"
                             value={stats.pengajuan_cuti_pending ?? 0}
                             icon={CalendarPlus}
                             color="bg-gradient-to-br from-amber-500 to-amber-600"
                         />
+                        <StatCard
+                            title="Belum Absen Hari Ini"
+                            value={stats.belum_absen_hari_ini ?? 0}
+                            icon={Users}
+                            color="bg-gradient-to-br from-red-500 to-red-600"
+                        />
+                        <StatCard
+                            title="Karyawan Cuti Hari Ini"
+                            value={stats.karyawan_cuti_hari_ini ?? 0}
+                            icon={CalendarPlus}
+                            color="bg-gradient-to-br from-teal-500 to-teal-600"
+                        />
+                        <StatCard
+                            title="Form Keluar Hari Ini"
+                            value={stats.form_keluar_hari_ini ?? 0}
+                            icon={DoorOpen}
+                            color="bg-gradient-to-br from-purple-500 to-purple-600"
+                        />
                     </div>
                 )}
 
+                {/* Staff Stats */}
                 {userRole === 'staff' && (
-                    <div className="rounded-xl border border-sidebar-border/70 bg-white p-8 text-center dark:border-sidebar-border dark:bg-neutral-900">
-                        <p className="text-neutral-500 dark:text-neutral-400">
-                            Fitur self-service akan segera hadir. Anda dapat mengakses slip gaji, absensi, dan pengajuan cuti di sini.
-                        </p>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <StatCard
+                            title="Pengajuan Cuti Pending"
+                            value={stats.pengajuan_cuti_pending ?? 0}
+                            icon={CalendarPlus}
+                            color="bg-gradient-to-br from-amber-500 to-amber-600"
+                        />
                     </div>
                 )}
             </div>
