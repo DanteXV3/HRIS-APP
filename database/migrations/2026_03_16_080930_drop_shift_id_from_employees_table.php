@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-            //
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(['shift_id']);
+            }
+            $table->dropColumn('shift_id');
         });
     }
 
@@ -22,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-            //
+            $table->foreignId('shift_id')->nullable()->after('work_location_id')->constrained('shifts')->nullOnDelete();
         });
     }
 };
