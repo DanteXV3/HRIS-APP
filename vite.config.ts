@@ -21,9 +21,6 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
-    build: {
-        chunkSizeWarningLimit: 2000,
-    },
     esbuild: {
         jsx: 'automatic',
     },

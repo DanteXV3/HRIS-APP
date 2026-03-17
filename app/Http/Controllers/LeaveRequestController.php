@@ -129,22 +129,24 @@ class LeaveRequestController extends Controller
             'attachment' => 'nullable|file|max:5120',
         ]);
 
-        // Calculate days
-        $start = \Carbon\Carbon::parse($validated['tanggal_mulai']);
-        $end = \Carbon\Carbon::parse($validated['tanggal_selesai']);
-        $jumlahHari = $start->diffInDays($end) + 1;
+        // Check for overlapping requests
+        $overlap = LeaveRequest::where('employee_id', $employee->id)
+            ->whereIn('status', ['pending', 'partially_approved', 'approved'])
+            ->where(function ($q) use ($validated) {
+                $q->where(function ($q) use ($validated) {
+                    $q->where('tanggal_mulai', '<=', $validated['tanggal_mulai'])
+                        ->where('tanggal_selesai', '>=', $validated['tanggal_mulai']);
+                })->orWhere(function ($q) use ($validated) {
+                    $q->where('tanggal_mulai', '<=', $validated['tanggal_selesai'])
+                        ->where('tanggal_selesai', '>=', $validated['tanggal_selesai']);
+                })->orWhere(function ($q) use ($validated) {
+                    $q->where('tanggal_mulai', '>=', $validated['tanggal_mulai'])
+                        ->where('tanggal_selesai', '<=', $validated['tanggal_selesai']);
+                });
+            })->exists();
 
-        // Check balance for Cuti Tahunan
-        $leaveType = LeaveType::find($validated['leave_type_id']);
-        if ($leaveType->name === 'Cuti Tahunan') {
-            $balance = LeaveBalance::firstOrCreate(
-                ['employee_id' => $employee->id, 'leave_type_id' => $leaveType->id, 'year' => now()->year],
-                ['total_days' => $leaveType->max_days, 'used_days' => 0]
-            );
-
-            if ($balance->remaining_days < $jumlahHari) {
-                return back()->withErrors(['leave_type_id' => "Sisa cuti tahunan Anda tidak cukup. Tersisa {$balance->remaining_days} hari."]);
-            }
+        if ($overlap) {
+            return back()->withErrors(['tanggal_mulai' => "Anda sudah memiliki pengajuan cuti/izin pada tanggal tersebut yang sedang diproses atau sudah disetujui."]);
         }
 
         // Handle file upload
