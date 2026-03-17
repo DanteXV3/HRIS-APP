@@ -1,27 +1,21 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
-# Wait for MySQL to be ready
-if [ "$DB_CONNECTION" = "mysql" ]; then
-    echo "Waiting for mysql..."
-    while ! nc -z $DB_HOST $DB_PORT; do
-      sleep 1
-    done
-    echo "MySQL started"
+# Wait for database if needed (optional but good for stability)
+# You could use a tool like wait-for-it.sh here
+
+# Run composer install if vendor doesn't exist (useful for dev/mounting)
+if [ ! -d "vendor" ]; then
+    composer install --optimize-autoloader --no-dev
 fi
 
 # Run migrations
 php artisan migrate --force
 
-# Create storage link if not exists
-php artisan storage:link || true
-
-# Clear and cache config/routes
+# Cache configuration and routes for performance
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Start PHP-FPM in the background
-php-fpm -D
-
-# Start Nginx in the foreground
-nginx -g 'daemon off;'
+# Execute the main command (php-fpm)
+exec "$@"
