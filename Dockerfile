@@ -1,10 +1,14 @@
 # Stage 1: Build the frontend assets
 FROM node:20-alpine AS build-frontend
 WORKDIR /app
+
+# Install build dependencies for native modules if needed
+RUN apk add --no-cache build-base python3 libc6-compat
+
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN npm run build
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Stage 2: Build the PHP application
 FROM php:8.2-fpm-alpine
