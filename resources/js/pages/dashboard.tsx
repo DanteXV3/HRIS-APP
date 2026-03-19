@@ -1,9 +1,8 @@
 import { Head, usePage, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Building2, CalendarPlus, UserPlus, Users, Camera, XCircle, CheckCircle2, FileText, DoorOpen } from 'lucide-react';
+import { Building2, CalendarPlus, UserPlus, Users, XCircle, CheckCircle2, FileText, DoorOpen, MapPin, Loader2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import FaceScanner from '@/components/FaceScanner';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem, DashboardStats, Employee } from '@/types';
 
@@ -39,45 +38,55 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: n
 }
 
 export default function Dashboard() {
-    const { stats, userRole, employee, todayAttendance, allEmployees } = usePage<{ props: Props }>().props as unknown as Props;
-    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const { stats, userRole, employee, todayAttendance } = usePage<{ props: Props }>().props as unknown as Props;
     const [isProcessing, setIsProcessing] = useState(false);
     const [successMessage, setSuccessMessage] = useState<{title: string, message: string, type: 'in'|'out'|'error'} | null>(null);
 
-    const handleMatch = async (matchedId: number, distance: number, location?: { latitude: number, longitude: number } | null) => {
-        if (!employee || matchedId !== employee.id) {
-            setSuccessMessage({ title: 'Gagal Memverifikasi', message: 'Wajah tidak cocok dengan akun login Anda. Silahkan coba lagi.', type: 'error' });
-            setTimeout(() => setSuccessMessage(null), 3000);
-            return;
-        }
-
-        if (isProcessing) return;
+    const handleAttendance = async () => {
+        if (!employee || isProcessing) return;
         setIsProcessing(true);
+        setSuccessMessage(null);
 
-        try {
-            const response = await axios.post('/api/face-attendance/verify', {
-                employee_id: matchedId,
-                latitude: location?.latitude,
-                longitude: location?.longitude
-            });
-            const data = response.data;
+        // Get location
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                try {
+                    const response = await axios.post('/api/attendance/verify', {
+                        latitude,
+                        longitude
+                    });
+                    const data = response.data;
 
-            if (data.success) {
-                setIsCameraOpen(false);
-                setSuccessMessage({ title: data.name, message: data.message, type: data.action === 'clock_in' ? 'in' : 'out' });
-                setTimeout(() => {
-                    setSuccessMessage(null);
-                    router.reload(); // Refresh to update attendance state
-                }, 4000);
-            } else {
-                setSuccessMessage({ title: 'Peringatan', message: data.message, type: 'error' });
-                setTimeout(() => setSuccessMessage(null), 3000);
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsProcessing(false);
-        }
+                    if (data.success) {
+                        setSuccessMessage({ title: data.name, message: data.message, type: data.action === 'clock_in' ? 'in' : 'out' });
+                        setTimeout(() => {
+                            setSuccessMessage(null);
+                            router.reload(); // Refresh to update attendance state
+                        }, 4000);
+                    } else {
+                        setSuccessMessage({ title: 'Peringatan', message: data.message, type: 'error' });
+                        setTimeout(() => setSuccessMessage(null), 3000);
+                    }
+                } catch (error: any) {
+                    const message = error.response?.data?.message || 'Terjadi kesalahan sistem. Silahkan coba lagi.';
+                    setSuccessMessage({ title: 'Gagal', message, type: 'error' });
+                    setTimeout(() => setSuccessMessage(null), 3000);
+                } finally {
+                    setIsProcessing(false);
+                }
+            },
+            (error) => {
+                console.error(error);
+                let msg = 'Gagal mendapatkan lokasi. Pastikan GPS aktif dan izinkan akses lokasi.';
+                if (error.code === error.PERMISSION_DENIED) msg = 'Akses lokasi ditolak. Buka pengaturan browser untuk mengizinkan akses lokasi.';
+                
+                setSuccessMessage({ title: 'Lokasi Dibutuhkan', message: msg, type: 'error' });
+                setIsProcessing(false);
+                setTimeout(() => setSuccessMessage(null), 5000);
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
     };
 
     return (
@@ -99,33 +108,34 @@ export default function Dashboard() {
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                             <div>
                                 <h2 className="text-xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                                    <Camera className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                    <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                     Presensi Hari Ini
                                 </h2>
                                 <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
                                     {todayAttendance 
                                         ? (todayAttendance.clock_out ? 'Anda sudah menyelesaikan absensi hari ini.' : `Anda telah Clock In pada ${new Date(todayAttendance.clock_in).toLocaleTimeString()}. Silahkan Clock Out saat pulang.`)
-                                        : 'Anda belum absen hari ini. Silahkan gunakan kamera untuk Clock In.'}
+                                        : 'Anda belum absen hari ini.'}
                                 </p>
                             </div>
                             
                             {!todayAttendance?.clock_out && (
                                 <button
-                                    onClick={() => setIsCameraOpen(true)}
-                                    className={`px-6 py-3 rounded-lg font-semibold text-white shadow-md transition-all flex items-center gap-2
-                                        ${todayAttendance ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}
+                                    onClick={handleAttendance}
+                                    disabled={isProcessing}
+                                    className={`px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center gap-3 disabled:opacity-50
+                                        ${todayAttendance ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-amber-500/20' : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-blue-500/20'}
                                     `}
                                 >
-                                    <Camera className="w-5 h-5" />
-                                    {todayAttendance ? 'Clock Out (Wajah)' : 'Clock In (Wajah)'}
+                                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <MapPin className="w-5 h-5" />}
+                                    {todayAttendance ? 'Absen Pulang Sekarang' : 'Absen Masuk Sekarang'}
                                 </button>
                             )}
                         </div>
 
-                        {/* Success Message display */}
-                        {successMessage && !isCameraOpen && (
-                            <div className={`mt-4 p-4 rounded-lg flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 
-                                ${successMessage.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}
+                        {/* Success/Error Message display */}
+                        {successMessage && (
+                            <div className={`mt-4 p-4 rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 
+                                ${successMessage.type === 'error' ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:border-red-500/30' : 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:border-green-500/30'}
                             `}>
                                 {successMessage.type === 'error' ? <XCircle className="w-8 h-8 flex-shrink-0" /> : <CheckCircle2 className="w-8 h-8 flex-shrink-0 text-green-500" />}
                                 <div>
@@ -134,40 +144,6 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {/* Camera Modal */}
-                {isCameraOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                        <div className="relative w-full max-w-lg">
-                            <button 
-                                onClick={() => setIsCameraOpen(false)}
-                                className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors flex items-center gap-2"
-                            >
-                                Tutup <XCircle className="w-6 h-6" />
-                            </button>
-                            
-                            {successMessage ? (
-                                <div className="bg-neutral-900 rounded-2xl p-8 text-center text-white border border-neutral-800 shadow-2xl">
-                                    {successMessage.type === 'error' ? <XCircle className="w-16 h-16 mx-auto mb-4 text-red-500" /> : <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500 flex-shrink-0" />}
-                                    <h3 className="text-2xl font-bold">{successMessage.title}</h3>
-                                    <p className="text-neutral-400 mt-2">{successMessage.message}</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="bg-neutral-900 rounded-xl p-4 border border-neutral-800 flex justify-between items-center text-white">
-                                        <h3 className="font-semibold">{todayAttendance ? 'Absen Pulang' : 'Absen Masuk'}</h3>
-                                        <p className="text-xs text-neutral-400">Verifikasi Wajah: {employee?.nama}</p>
-                                    </div>
-                                    <FaceScanner 
-                                        employees={allEmployees as any} 
-                                        onMatch={handleMatch} 
-                                        isProcessing={isProcessing} 
-                                    />
-                                </div>
-                            )}
-                        </div>
                     </div>
                 )}
 

@@ -1,8 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
-import { Edit, Eye, Plus, UserX, Camera, XCircle } from 'lucide-react';
+import React from 'react';
+import { Edit, Eye, Plus, UserX } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import FaceEnrollment from '@/components/FaceEnrollment';
 import type { BreadcrumbItem, Employee, Pagination } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -34,7 +33,6 @@ const statusColors: Record<string, string> = {
 
 export default function EmployeeIndex() {
     const { employees, departments, workLocations, lokasiKerjaList, filters } = usePage<{ props: Props }>().props as unknown as Props;
-    const [enrollingEmployeeId, setEnrollingEmployeeId] = useState<number | null>(null);
 
     function handleSearch(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -153,23 +151,11 @@ export default function EmployeeIndex() {
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 text-sm">
                                             <div className="flex items-center gap-2">
-                                                {emp.face_descriptor ? (
-                                                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600" title="Face terdaftar">
-                                                        <Camera className="w-3.5 h-3.5" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-neutral-100 text-neutral-400" title="Face belum terdaftar">
-                                                        <Camera className="w-3.5 h-3.5" />
-                                                    </span>
-                                                )}
                                                 <span className={`inline-block h-2.5 w-2.5 rounded-full ${emp.is_active ? 'bg-emerald-500' : 'bg-red-400'}`} />
                                             </div>
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button onClick={() => setEnrollingEmployeeId(emp.id)} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 dark:hover:bg-neutral-800" title="Enroll Wajah">
-                                                    <Camera className="h-4 w-4" />
-                                                </button>
                                                 <Link href={`/employees/${emp.id}`} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 dark:hover:bg-neutral-800">
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
@@ -201,27 +187,6 @@ export default function EmployeeIndex() {
                     </div>
                 )}
             </div>
-
-            {/* Face Enrollment Modal */}
-            {enrollingEmployeeId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="relative w-full max-w-lg">
-                        <button 
-                            onClick={() => setEnrollingEmployeeId(null)}
-                            className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors flex items-center gap-2"
-                        >
-                            Tutup <XCircle className="w-6 h-6" />
-                        </button>
-                        <FaceEnrollment 
-                            employeeId={enrollingEmployeeId} 
-                            onEnrollmentComplete={() => {
-                                setEnrollingEmployeeId(null);
-                                router.reload();
-                            }} 
-                        />
-                    </div>
-                </div>
-            )}
         </AppLayout>
     );
 }

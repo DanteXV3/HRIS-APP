@@ -109,16 +109,6 @@ export default function Login({
                 </div>
             )}
 
-            <div className="mt-8 pt-6 border-t border-neutral-200 text-center">
-                <p className="text-sm text-neutral-500 mb-4">Fitur Karyawan Khusus</p>
-                <Link
-                    href="/kiosk"
-                    className="inline-flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full gap-2"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                    Buka Kiosk Absensi Wajah
-                </Link>
-            </div>
         </AuthLayout>
     );
 }

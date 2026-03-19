@@ -10,33 +10,22 @@ use Carbon\Carbon;
 class FaceAttendanceController extends Controller
 {
     /**
-     * API to enroll an employee's face descriptor.
-     */
-    public function enroll(Request $request, Employee $employee)
-    {
-        $request->validate([
-            'descriptor' => 'required|array',
-        ]);
-
-        $employee->update([
-            'face_descriptor' => $request->descriptor,
-        ]);
-
-        return response()->json(['message' => 'Face successfully enrolled.']);
-    }
-
-    /**
-     * API to verify a face descriptor and clock in/out automatically.
+     * API to verify and clock in/out automatically via button click.
      */
     public function verify(Request $request)
     {
-        $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-        ]);
+        $user = $request->user();
+        $employee = $user->employee ?? null;
 
-        $employee = Employee::with('shift')->findOrFail($request->employee_id);
+        if (!$employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data karyawan tidak ditemukan untuk akun Anda.'
+            ], 404);
+        }
+
+        $employee->load('shift');
         $today = Carbon::today('Asia/Jakarta')->format('Y-m-d');
-        $nowStr = Carbon::now('Asia/Jakarta')->format('H:i:s');
         $now = Carbon::now('Asia/Jakarta');
 
         // 1. Check if Attendance already exists today
@@ -81,7 +70,7 @@ class FaceAttendanceController extends Controller
                 'success' => true,
                 'name' => $employee->nama,
                 'action' => 'clock_in',
-                'message' => 'Happy Work ' . $employee->nama
+                'message' => 'Selamat bekerja, ' . $employee->nama . '!'
             ]);
         }
 
@@ -115,7 +104,7 @@ class FaceAttendanceController extends Controller
                 'success' => true,
                 'name' => $employee->nama,
                 'action' => 'clock_out',
-                'message' => 'Hati-hati dijalan yaaa ' . $employee->nama
+                'message' => 'Hati-hati di jalan, ' . $employee->nama . '!'
             ]);
         }
 

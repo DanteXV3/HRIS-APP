@@ -16,13 +16,8 @@ use Laravel\Fortify\Features;
 
 Route::redirect('/', '/login')->name('home');
 
-// Public Face Recognition Kiosk Route
-Route::post('api/face-attendance/verify', [FaceAttendanceController::class, 'verify'])->name('face.verify')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-Route::get('kiosk', function () {
-    return inertia('kiosk/index', [
-        'employees' => \App\Models\Employee::select('id', 'nama', 'nik', 'face_descriptor')->get()
-    ]);
-})->name('kiosk');
+// Public Attendance Verify (still public but logic will handle auth if needed or we can move it inside auth)
+Route::post('api/attendance/verify', [FaceAttendanceController::class, 'verify'])->name('attendance.verify')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
@@ -38,8 +33,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
         Route::resource('employees', EmployeeController::class);
 
-        // Face Recognition Enrollment
-        Route::post('employees/{employee}/face-enroll', [FaceAttendanceController::class, 'enroll'])->name('employees.face-enroll');
 
         // Attendance
         Route::get('attendances/export', [AttendanceController::class, 'export'])->name('attendances.export');
