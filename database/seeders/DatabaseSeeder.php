@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             LeaveTypeSeeder::class,
             AdminUserSeeder::class,
             TestUserSeeder::class,
+            PayrollAndPayrollItemSeeder::class,
         ]);
     }
 }

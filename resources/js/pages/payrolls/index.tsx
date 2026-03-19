@@ -176,8 +176,19 @@ export default function PayrollIndex({ payrolls, flash }: Props) {
                     </div>
                 </div>
 
-                {/* Pagination (if we have more than 10 history rows we can add links here) */}
-                
+                {/* Pagination */}
+                {payrolls.links && payrolls.links.length > 3 && (
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-1">
+                        {payrolls.links.map((link, i) => (
+                            <Link
+                                key={i}
+                                href={link.url || '#'}
+                                className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'} border border-neutral-200 dark:border-neutral-700 ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </AppLayout>
     );
