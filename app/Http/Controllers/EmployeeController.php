@@ -165,6 +165,83 @@ class EmployeeController extends Controller
             ->with('success', 'Karyawan berhasil dinonaktifkan.');
     }
 
+    public function me(Request $request)
+    {
+        $employee = Employee::with(['department', 'position', 'workLocation', 'user', 'shift'])
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        return Inertia::render('profile/edit', [
+            'employee' => $employee,
+        ]);
+    }
+
+    public function updateMe(Request $request)
+    {
+        $employee = Employee::where('user_id', $request->user()->id)->firstOrFail();
+
+        $validated = $request->validate([
+            // Data Pribadi
+            'nama' => 'required|string|max:255',
+            'tempat_lahir' => 'nullable|string|max:255',
+            'tanggal_lahir' => 'nullable|date',
+            'alamat_tetap' => 'nullable|string',
+            'alamat_sekarang' => 'nullable|string',
+            'email' => 'required|email|max:255|unique:users,email,' . $request->user()->id,
+            'password' => 'nullable|string|min:8|confirmed',
+            'gender' => 'nullable|in:laki-laki,perempuan',
+            'status_pernikahan' => 'nullable|string|max:10',
+            'pendidikan_terakhir' => 'nullable|string|max:20',
+            'agama' => 'nullable|string|max:20',
+            'no_telpon_1' => 'nullable|string|max:20',
+            'no_telpon_2' => 'nullable|string|max:20',
+            // Identity
+            'no_ktp' => 'nullable|string|max:20',
+            'npwp' => 'nullable|string|max:30',
+            'no_bpjs_ketenagakerjaan' => 'nullable|string|max:30',
+            'no_bpjs_kesehatan' => 'nullable|string|max:30',
+            // Banking
+            'nama_bank' => 'nullable|string|max:100',
+            'cabang_bank' => 'nullable|string|max:100',
+            'no_rekening' => 'nullable|string|max:30',
+            'nama_rekening' => 'nullable|string|max:255',
+            // Emergency contacts
+            'nama_kontak_darurat_1' => 'nullable|string|max:255',
+            'no_kontak_darurat_1' => 'nullable|string|max:20',
+            'nama_kontak_darurat_2' => 'nullable|string|max:255',
+            'no_kontak_darurat_2' => 'nullable|string|max:20',
+            // Files
+            'photo' => 'nullable|image|max:2048',
+            'file_ktp' => 'nullable|file|max:5120',
+            'file_npwp' => 'nullable|file|max:5120',
+            'file_kk' => 'nullable|file|max:5120',
+            'file_ijazah' => 'nullable|file|max:5120',
+            'file_lainnya.*' => 'nullable|file|max:5120',
+        ]);
+
+        DB::transaction(function () use ($validated, $request, $employee) {
+            $validated = $this->handleFileUploads($request, $validated);
+
+            if ($employee->user) {
+                $userData = [
+                    'name' => $validated['nama'],
+                    'email' => $validated['email'],
+                ];
+
+                if (!empty($validated['password'])) {
+                    $userData['password'] = Hash::make($validated['password']);
+                }
+
+                $employee->user->update($userData);
+            }
+
+            $employee->update($validated);
+        });
+
+        return redirect()->back()
+            ->with('success', 'Profil Anda berhasil diperbarui.');
+    }
+
     // === Private Helpers ===
 
     private function validateEmployee(Request $request, ?int $ignoreId = null): array

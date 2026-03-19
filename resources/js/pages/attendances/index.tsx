@@ -203,6 +203,14 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
         document.body.removeChild(link);
     }
 
+    // Helper to format minutes to "HH:mm"
+    function formatMinutes(minutes: number) {
+        if (!minutes || minutes <= 0) return '00:00';
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Data Absensi" />
@@ -341,8 +349,8 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-center">
                                                 <div className="flex flex-col items-center gap-1">
-                                                    {att.late_in_minutes > 0 && <span className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded">Late in {att.late_in_minutes}m</span>}
-                                                    {att.early_out_minutes > 0 && <span className="text-[10px] bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 px-1.5 py-0.5 rounded">Early out {att.early_out_minutes}m</span>}
+                                                    {att.late_in_minutes > 0 && <span className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded">Late {formatMinutes(att.late_in_minutes)}</span>}
+                                                    {att.early_out_minutes > 0 && <span className="text-[10px] bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 px-1.5 py-0.5 rounded">Early {formatMinutes(att.early_out_minutes)}</span>}
                                                     {att.late_in_minutes === 0 && att.early_out_minutes === 0 && att.clock_in && att.clock_out && (
                                                         <CheckCircle2 className="w-4 h-4 text-green-500" />
                                                     )}
@@ -360,8 +368,8 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-center">
                                                 <div className="flex flex-col items-center">
-                                                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Raw: {(att.overtime_minutes / 60).toFixed(1)}h</div>
-                                                    <div className="text-sm font-semibold text-green-600 dark:text-green-400">✔ {(att.verified_lembur_minutes / 60).toFixed(1)}h</div>
+                                                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Raw: {formatMinutes(att.overtime_minutes)}</div>
+                                                    <div className="text-sm font-semibold text-green-600 dark:text-green-400">✔ {formatMinutes(att.verified_lembur_minutes)}</div>
                                                 </div>
                                             </td>
                                             <td className="whitespace-nowrap px-6 py-4 text-center">

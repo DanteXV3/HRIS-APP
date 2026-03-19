@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\Payroll;
 use App\Models\PayrollItem;
 use App\Models\WorkLocation;
@@ -15,6 +16,23 @@ use Exception;
 
 class PayrollController extends Controller
 {
+    public function myPayroll(Request $request)
+    {
+        $employee = Employee::where('user_id', $request->user()->id)->firstOrFail();
+
+        $payrolls = PayrollItem::with(['payroll', 'employee'])
+            ->where('employee_id', $employee->id)
+            ->whereHas('payroll', function($q) {
+                $q->where('status', 'finalized'); // Only show finalized payrolls to employees
+            })
+            ->orderBy(Payroll::select('periode')->whereColumn('payrolls.id', 'payroll_items.payroll_id'), 'desc')
+            ->paginate(10);
+
+        return Inertia::render('payrolls/me', [
+            'payrolls' => $payrolls,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $payrolls = Payroll::with('processedBy')
@@ -132,10 +150,22 @@ class PayrollController extends Controller
         return back()->with('success', 'Rincian gaji berhasil diperbarui.');
     }
 
-    public function downloadPdf(Payroll $payroll, PayrollItem $item)
+    public function downloadPdf(Request $request, Payroll $payroll, PayrollItem $item)
     {
         if ($item->payroll_id !== $payroll->id) {
             abort(404);
+        }
+
+        // Permission check for employees
+        $user = $request->user();
+        if ($user->role !== 'admin') {
+            $employee = Employee::where('user_id', $user->id)->firstOrFail();
+            if ($item->employee_id !== $employee->id) {
+                abort(403, 'Anda tidak memiliki akses ke slip gaji ini.');
+            }
+            if ($payroll->status !== 'finalized') {
+                abort(403, 'Slip gaji periode ini belum difinalisasi.');
+            }
         }
 
         $item->load(['employee.position', 'employee.department', 'employee.workLocation']);

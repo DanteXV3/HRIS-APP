@@ -67,6 +67,25 @@ export function AppSidebar() {
                 icon: MapPin,
             },
         );
+    } else {
+        // Employee-only visible items
+        mainNavItems.push(
+            {
+                title: 'Profil Saya',
+                href: '/profile',
+                icon: Users,
+            },
+            {
+                title: 'Absensi Saya',
+                href: '/my-attendance',
+                icon: CalendarClock,
+            },
+            {
+                title: 'Gaji Saya',
+                href: '/my-payroll',
+                icon: Receipt,
+            },
+        );
     }
 
     // Leave & Exit — visible to all roles

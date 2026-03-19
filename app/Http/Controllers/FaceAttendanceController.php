@@ -56,9 +56,9 @@ class FaceAttendanceController extends Controller
             if ($jamMasuk) {
                 $shiftIn = Carbon::parse($today . ' ' . $jamMasuk, 'Asia/Jakarta');
                 if ($now->lt($shiftIn)) {
-                    $earlyInMinutes = $shiftIn->diffInMinutes($now);
+                    $earlyInMinutes = abs(round($shiftIn->diffInMinutes($now)));
                 } elseif ($now->gt($shiftIn)) {
-                    $lateInMinutes = $now->diffInMinutes($shiftIn);
+                    $lateInMinutes = abs(round($now->diffInMinutes($shiftIn)));
                 }
             }
 
@@ -95,9 +95,9 @@ class FaceAttendanceController extends Controller
 
             if ($shiftOut) {
                 if ($now->lt($shiftOut)) {
-                    $earlyOutMinutes = $shiftOut->diffInMinutes($now);
+                    $earlyOutMinutes = abs(round($shiftOut->diffInMinutes($now)));
                 } elseif ($now->gt($shiftOut)) {
-                    $lateOutMinutes = $now->diffInMinutes($shiftOut);
+                    $lateOutMinutes = abs(round($now->diffInMinutes($shiftOut)));
                     $overtimeMinutes = $lateOutMinutes;
                 }
             }

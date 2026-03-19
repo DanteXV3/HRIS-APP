@@ -14,6 +14,31 @@ use App\Exports\AttendanceExport;
 
 class AttendanceController extends Controller
 {
+    public function myAttendance(Request $request)
+    {
+        $employee = Employee::where('user_id', $request->user()->id)->firstOrFail();
+
+        $tanggalStart = $request->input('tanggal_start');
+        $tanggalEnd = $request->input('tanggal_end');
+
+        $attendances = Attendance::where('employee_id', $employee->id)
+            ->when($tanggalStart, function ($query, $tanggalStart) {
+                $query->where('tanggal', '>=', $tanggalStart);
+            })
+            ->when($tanggalEnd, function ($query, $tanggalEnd) {
+                $query->where('tanggal', '<=', $tanggalEnd);
+            })
+            ->orderBy('tanggal', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return Inertia::render('attendances/me', [
+            'attendances' => $attendances,
+            'filters' => $request->only(['tanggal_start', 'tanggal_end']),
+            'employee' => $employee->load('shift'),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -139,9 +164,9 @@ class AttendanceController extends Controller
                         $shiftIn = Carbon::parse($tanggal . ' ' . $jamMasuk);
                         $cIn = Carbon::parse($clockIn);
                         if ($cIn->lt($shiftIn)) {
-                            $earlyInMinutes = $shiftIn->diffInMinutes($cIn);
+                            $earlyInMinutes = abs(round($shiftIn->diffInMinutes($cIn)));
                         } elseif ($cIn->gt($shiftIn)) {
-                            $lateInMinutes = $cIn->diffInMinutes($shiftIn);
+                            $lateInMinutes = abs(round($cIn->diffInMinutes($shiftIn)));
                         }
                     }
 
@@ -149,9 +174,9 @@ class AttendanceController extends Controller
                         $shiftOut = Carbon::parse($tanggal . ' ' . $jamPulang);
                         $cOut = Carbon::parse($clockOut);
                         if ($cOut->lt($shiftOut)) {
-                            $earlyOutMinutes = $shiftOut->diffInMinutes($cOut);
+                            $earlyOutMinutes = abs(round($shiftOut->diffInMinutes($cOut)));
                         } elseif ($cOut->gt($shiftOut)) {
-                            $lateOutMinutes = $cOut->diffInMinutes($shiftOut);
+                            $lateOutMinutes = abs(round($cOut->diffInMinutes($shiftOut)));
                             // Auto calculate basic overtime as late out if not specified
                             if ($overtimeMinutes === 0) {
                                 $overtimeMinutes = $lateOutMinutes;
@@ -236,9 +261,9 @@ class AttendanceController extends Controller
             $shiftIn = Carbon::parse($validated['tanggal'] . ' ' . $jamMasuk);
             $cIn = Carbon::parse($clockIn);
             if ($cIn->lt($shiftIn)) {
-                $earlyInMinutes = $shiftIn->diffInMinutes($cIn);
+                $earlyInMinutes = abs(round($shiftIn->diffInMinutes($cIn)));
             } elseif ($cIn->gt($shiftIn)) {
-                $lateInMinutes = $cIn->diffInMinutes($shiftIn);
+                $lateInMinutes = abs(round($cIn->diffInMinutes($shiftIn)));
             }
         }
 
@@ -246,9 +271,9 @@ class AttendanceController extends Controller
             $shiftOut = Carbon::parse($validated['tanggal'] . ' ' . $jamPulang);
             $cOut = Carbon::parse($clockOut);
             if ($cOut->lt($shiftOut)) {
-                $earlyOutMinutes = $shiftOut->diffInMinutes($cOut);
+                $earlyOutMinutes = abs(round($shiftOut->diffInMinutes($cOut)));
             } elseif ($cOut->gt($shiftOut)) {
-                $lateOutMinutes = $cOut->diffInMinutes($shiftOut);
+                $lateOutMinutes = abs(round($cOut->diffInMinutes($shiftOut)));
                 $overtimeMinutes = $lateOutMinutes;
             }
         }
@@ -313,9 +338,9 @@ class AttendanceController extends Controller
             $shiftIn = Carbon::parse($validated['tanggal'] . ' ' . $jamMasuk);
             $cIn = Carbon::parse($clockIn);
             if ($cIn->lt($shiftIn)) {
-                $earlyInMinutes = $shiftIn->diffInMinutes($cIn);
+                $earlyInMinutes = abs(round($shiftIn->diffInMinutes($cIn)));
             } elseif ($cIn->gt($shiftIn)) {
-                $lateInMinutes = $cIn->diffInMinutes($shiftIn);
+                $lateInMinutes = abs(round($cIn->diffInMinutes($shiftIn)));
             }
         }
 
@@ -323,9 +348,9 @@ class AttendanceController extends Controller
             $shiftOut = Carbon::parse($validated['tanggal'] . ' ' . $jamPulang);
             $cOut = Carbon::parse($clockOut);
             if ($cOut->lt($shiftOut)) {
-                $earlyOutMinutes = $shiftOut->diffInMinutes($cOut);
+                $earlyOutMinutes = abs(round($shiftOut->diffInMinutes($cOut)));
             } elseif ($cOut->gt($shiftOut)) {
-                $lateOutMinutes = $cOut->diffInMinutes($shiftOut);
+                $lateOutMinutes = abs(round($cOut->diffInMinutes($shiftOut)));
                 $overtimeMinutes = $lateOutMinutes;
             }
         }

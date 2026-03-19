@@ -56,10 +56,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('payrolls/{payroll}/export-excel', [PayrollController::class, 'exportExcel'])->name('payrolls.exportExcel');
         Route::get('payrolls/{payroll}/export-pdf-report', [PayrollController::class, 'exportPdfReport'])->name('payrolls.exportPdfReport');
         Route::get('payrolls/{payroll}', [PayrollController::class, 'show'])->name('payrolls.show');
-        Route::get('payrolls/{payroll}/items/{item}/pdf', [PayrollController::class, 'downloadPdf'])->name('payrolls.pdf');
-        Route::put('payrolls/{payroll}/items/{item}', [PayrollController::class, 'updateItem'])->name('payrolls.updateItem');
         Route::delete('payrolls/{payroll}', [PayrollController::class, 'destroy'])->name('payrolls.destroy');
     });
+
+    Route::get('payrolls/{payroll}/items/{item}/pdf', [PayrollController::class, 'downloadPdf'])->name('payrolls.pdf');
 
     // Leave Requests — all authenticated users
     Route::resource('leaves', LeaveRequestController::class)->only(['index', 'create', 'store', 'show'])->parameters(['leaves' => 'leave']);
@@ -69,6 +69,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Exit Permits — all authenticated users
     Route::resource('exit-permits', ExitPermitController::class)->only(['index', 'create', 'store']);
+
+    // Employee Self-Service
+    Route::get('profile', [EmployeeController::class, 'me'])->name('profile.me');
+    Route::put('profile', [EmployeeController::class, 'updateMe'])->name('profile.update-me');
+    Route::get('my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendances.me');
+    Route::get('my-payroll', [PayrollController::class, 'myPayroll'])->name('payrolls.me');
 });
 
 require __DIR__.'/settings.php';
