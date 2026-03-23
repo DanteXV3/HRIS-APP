@@ -34,6 +34,7 @@ function formatCurrency(value: number | string): string {
 }
 
 export default function EmployeeShow() {
+    const { auth } = usePage<{ auth: { user: any } }>().props;
     const { employee } = usePage<{ props: Props }>().props as unknown as Props;
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -70,10 +71,12 @@ export default function EmployeeShow() {
                             </div>
                         </div>
                     </div>
-                    <Link href={`/employees/${employee.id}/edit`}
-                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                        <Edit className="h-4 w-4" /> Edit
-                    </Link>
+                    {(auth.user.role === 'admin' || auth.user.can?.includes('employee.edit')) && (
+                        <Link href={`/employees/${employee.id}/edit`}
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                            <Edit className="h-4 w-4" /> Edit
+                        </Link>
+                    )}
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">

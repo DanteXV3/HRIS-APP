@@ -10,6 +10,9 @@ class ShiftController extends Controller
 {
     public function index(Request $request)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('shift.manage')) {
+            abort(403);
+        }
         $search = $request->input('search');
         
         $shifts = Shift::when($search, function ($query, $search) {
@@ -27,6 +30,9 @@ class ShiftController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('shift.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'jam_masuk' => 'required|date_format:H:i',
@@ -40,6 +46,9 @@ class ShiftController extends Controller
 
     public function update(Request $request, Shift $shift)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('shift.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'jam_masuk' => 'required|date_format:H:i',
@@ -53,6 +62,9 @@ class ShiftController extends Controller
 
     public function destroy(Shift $shift)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('shift.manage')) {
+            abort(403);
+        }
         if ($shift->employees()->exists()) {
             return redirect()->back()->with('error', 'Tidak dapat menghapus Shift karena masih digunakan oleh Karyawan.');
         }

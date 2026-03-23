@@ -12,8 +12,10 @@ class Employee extends Model
     use HasFactory;
 
     protected $fillable = [
-        'lokasi_kerja',
+        'working_location_id',
         'user_id',
+        'report_to',
+        'dashboard_config',
         // Data Pribadi
         'nama',
         'nik',
@@ -78,11 +80,12 @@ class Employee extends Model
     protected function casts(): array
     {
         return [
-            'tanggal_lahir' => 'date',
-            'hire_date' => 'date',
-            'end_date' => 'date',
+            'tanggal_lahir' => 'date:Y-m-d',
+            'hire_date' => 'date:Y-m-d',
+            'end_date' => 'date:Y-m-d',
             'is_active' => 'boolean',
             'file_lainnya' => 'array',
+            'dashboard_config' => 'array',
             'gaji_pokok' => 'decimal:2',
             'tunjangan_jabatan' => 'decimal:2',
             'tunjangan_kehadiran' => 'decimal:2',
@@ -121,6 +124,11 @@ class Employee extends Model
         return $this->belongsTo(WorkLocation::class);
     }
 
+    public function workingLocation(): BelongsTo
+    {
+        return $this->belongsTo(WorkingLocation::class);
+    }
+
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
@@ -136,14 +144,29 @@ class Employee extends Model
         return $this->hasMany(LeaveRequest::class);
     }
 
-    public function leaveBalances(): HasMany
+    public function overtimes(): BelongsToMany
     {
-        return $this->hasMany(LeaveBalance::class);
+        return $this->belongsToMany(Overtime::class, 'overtime_employee');
+    }
+
+    public function createdOvertimes(): HasMany
+    {
+        return $this->hasMany(Overtime::class, 'creator_id');
     }
 
     public function payrollItems(): HasMany
     {
         return $this->hasMany(PayrollItem::class);
+    }
+
+    public function reportTo(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'report_to');
+    }
+
+    public function subordinates(): HasMany
+    {
+        return $this->hasMany(Employee::class, 'report_to');
     }
 
     // === Helpers ===

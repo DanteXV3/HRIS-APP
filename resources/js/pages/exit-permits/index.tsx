@@ -48,55 +48,45 @@ export default function ExitPermitIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Form Keluar" />
-            <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-                <div className="sm:flex sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                             <DoorOpen className="w-6 h-6 text-blue-600" />
                             Form Keluar
                         </h1>
-                        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
                             Catatan izin keluar kantor sementara.
                         </p>
                     </div>
-                    <div className="mt-4 sm:mt-0">
-                        <Link
-                            href="/exit-permits/create"
-                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Buat Form Keluar
-                        </Link>
-                    </div>
+                    <Link
+                        href="/exit-permits/create"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 w-full sm:w-auto"
+                    >
+                        <Plus className="h-4 w-4" /> Buat Form Keluar
+                    </Link>
                 </div>
 
-                <form onSubmit={handleFilter} className="mt-6 flex flex-wrap gap-3 items-end">
-                    <div>
-                        <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">Dari</label>
-                        <input
-                            type="date"
-                            value={tanggalStart}
-                            onChange={e => setTanggalStart(e.target.value)}
-                            className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">Sampai</label>
-                        <input
-                            type="date"
-                            value={tanggalEnd}
-                            onChange={e => setTanggalEnd(e.target.value)}
-                            className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                        />
-                    </div>
-                    <button type="submit" className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">
+                <form onSubmit={handleFilter} className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+                    <input
+                        type="date"
+                        value={tanggalStart}
+                        onChange={e => setTanggalStart(e.target.value)}
+                        className="w-full sm:w-40 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                    />
+                    <input
+                        type="date"
+                        value={tanggalEnd}
+                        onChange={e => setTanggalEnd(e.target.value)}
+                        className="w-full sm:w-40 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                    />
+                    <button type="submit" className="rounded-lg bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">
                         Filter
                     </button>
                 </form>
 
-                <div className="mt-6 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+                <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
                             <thead className="bg-neutral-50 dark:bg-neutral-800/50">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Tanggal</th>
@@ -110,22 +100,22 @@ export default function ExitPermitIndex() {
                                 {exitPermits.data.length > 0 ? (
                                     exitPermits.data.map(ep => (
                                         <tr key={ep.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                                            <td className="whitespace-nowrap px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300">
-                                                {new Date(ep.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                            </td>
-                                            <td className="whitespace-nowrap px-4 py-3">
-                                                <div className="text-sm font-medium text-neutral-900 dark:text-white">{ep.employee?.nama}</div>
-                                                <div className="text-xs text-neutral-500 dark:text-neutral-400">{ep.employee?.department?.name}</div>
-                                            </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm font-mono text-neutral-700 dark:text-neutral-300">
-                                                {ep.jam_mulai?.substring(0, 5)}
-                                            </td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm font-mono text-neutral-700 dark:text-neutral-300">
-                                                {ep.jam_berakhir?.substring(0, 5)}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-neutral-700 dark:text-neutral-300 max-w-xs truncate">
-                                                {ep.keperluan}
-                                            </td>
+                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-neutral-700 dark:text-neutral-300">
+                                            {new Date(ep.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4">
+                                            <div className="text-sm font-medium text-neutral-900 dark:text-white">{ep.employee?.nama}</div>
+                                            <div className="text-xs text-neutral-500 dark:text-neutral-400">{ep.employee?.department?.name}</div>
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4 text-center text-sm font-mono text-neutral-700 dark:text-neutral-300">
+                                            {ep.jam_mulai?.substring(0, 5)}
+                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-4 text-center text-sm font-mono text-neutral-700 dark:text-neutral-300">
+                                            {ep.jam_berakhir?.substring(0, 5)}
+                                        </td>
+                                        <td className="px-4 py-4 text-sm text-neutral-700 dark:text-neutral-300 max-w-xs truncate">
+                                            {ep.keperluan}
+                                        </td>
                                         </tr>
                                     ))
                                 ) : (
@@ -138,25 +128,26 @@ export default function ExitPermitIndex() {
                             </tbody>
                         </table>
                     </div>
-                </div>
 
-                {/* Pagination */}
                 {exitPermits.links && exitPermits.links.length > 3 && (
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-1">
-                        {exitPermits.links.map((link, i) => {
-                            const isPrev = link.label.includes('Previous');
-                            const isNext = link.label.includes('Next');
-                            const label = isPrev ? '«' : isNext ? '»' : link.label;
-                            return link.url ? (
-                                <button key={i} onClick={() => router.get(link.url!)} className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300'} border border-neutral-200 dark:border-neutral-700`}>
-                                    <span dangerouslySetInnerHTML={{ __html: label }} />
-                                </button>
-                            ) : (
-                                <span key={i} className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1 text-sm text-neutral-400 dark:border-neutral-800">
-                                    <span dangerouslySetInnerHTML={{ __html: label }} />
-                                </span>
-                            );
-                        })}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-neutral-500">Menampilkan {exitPermits.from}-{exitPermits.to} dari {exitPermits.total} data</p>
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                            {exitPermits.links.map((link, i) => {
+                                const isPrev = link.label.includes('Previous');
+                                const isNext = link.label.includes('Next');
+                                const label = isPrev ? '«' : isNext ? '»' : link.label;
+                                return link.url ? (
+                                    <button key={i} onClick={() => router.get(link.url!)} className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300'} border border-neutral-200 dark:border-neutral-700`}>
+                                        <span dangerouslySetInnerHTML={{ __html: label }} />
+                                    </button>
+                                ) : (
+                                    <span key={i} className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1 text-sm text-neutral-400 dark:border-neutral-800">
+                                        <span dangerouslySetInnerHTML={{ __html: label }} />
+                                    </span>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </div>

@@ -18,7 +18,17 @@ class PayrollController extends Controller
 {
     public function myPayroll(Request $request)
     {
-        $employee = Employee::where('user_id', $request->user()->id)->firstOrFail();
+        $employee = Employee::where('user_id', $request->user()->id)->first();
+
+        if (!$employee) {
+            return Inertia::render('payrolls/me', [
+                'payrolls' => [
+                    'data' => [],
+                    'total' => 0,
+                ],
+                'error' => 'Akun Anda tidak terhubung dengan data karyawan.'
+            ]);
+        }
 
         $payrolls = PayrollItem::with(['payroll', 'employee'])
             ->where('employee_id', $employee->id)
@@ -35,6 +45,9 @@ class PayrollController extends Controller
 
     public function index(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
         $payrolls = Payroll::with('processedBy')
                            ->orderByDesc('periode')
                            ->paginate(10);
@@ -46,6 +59,9 @@ class PayrollController extends Controller
 
     public function generate(Request $request, PayrollService $payrollService)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.create')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'periode' => 'required|string|regex:/^\d{4}-\d{2}$/', // YYYY-MM
             'notes' => 'nullable|string',
@@ -65,16 +81,22 @@ class PayrollController extends Controller
         }
     }
 
-    public function show(Payroll $payroll)
+    public function show(Request $request, Payroll $payroll)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
         $payroll->load(['items.employee.position', 'items.employee.department', 'processedBy']);
         return Inertia::render('payrolls/show', [
             'payroll' => $payroll,
         ]);
     }
 
-    public function destroy(Payroll $payroll)
+    public function destroy(Request $request, Payroll $payroll)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.create')) {
+            abort(403);
+        }
         if ($payroll->status === 'finalized') {
             return back()->with('error', 'Payroll yang sudah difinalisasi tidak dapat dihapus.');
         }
@@ -85,6 +107,9 @@ class PayrollController extends Controller
 
     public function finalize(Payroll $payroll)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('payroll.finalize')) {
+            abort(403);
+        }
         if ($payroll->status === 'finalized') {
             return back()->with('error', 'Payroll ini sudah dalam status finalisasi.');
         }
@@ -96,6 +121,9 @@ class PayrollController extends Controller
 
     public function updateItem(Request $request, Payroll $payroll, PayrollItem $item)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.edit')) {
+            abort(403);
+        }
         if ($payroll->status === 'finalized') {
             return back()->with('error', 'Payroll yang sudah difinalisasi tidak dapat diubah.');
         }
@@ -158,9 +186,9 @@ class PayrollController extends Controller
 
         // Permission check for employees
         $user = $request->user();
-        if ($user->role !== 'admin') {
-            $employee = Employee::where('user_id', $user->id)->firstOrFail();
-            if ($item->employee_id !== $employee->id) {
+        if ($user->role !== 'admin' && !$user->hasPermission('payroll.view')) {
+            $employee = Employee::where('user_id', $user->id)->first();
+            if (!$employee || $item->employee_id !== $employee->id) {
                 abort(403, 'Anda tidak memiliki akses ke slip gaji ini.');
             }
             if ($payroll->status !== 'finalized') {
@@ -180,15 +208,21 @@ class PayrollController extends Controller
         return $pdf->download($fileName);
     }
 
-    public function exportExcel(Payroll $payroll)
+    public function exportExcel(Request $request, Payroll $payroll)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
         $payroll->load(['items.employee.workLocation']);
         $fileName = 'Laporan_Payroll_' . $payroll->periode . '.xlsx';
         return Excel::download(new PayrollExport($payroll), $fileName);
     }
 
-    public function exportPdfReport(Payroll $payroll)
+    public function exportPdfReport(Request $request, Payroll $payroll)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
         $payroll->load(['items.employee.workLocation']);
         
         // Group items by company (work location)

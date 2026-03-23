@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Pagination } from '@/types';
 import { FileText, Play, Trash2, Eye } from 'lucide-react';
@@ -20,6 +20,9 @@ interface Props {
 }
 
 export default function PayrollIndex({ payrolls, flash }: Props) {
+    const { auth } = usePage<{ auth: { user: any } }>().props;
+    const canCreate = auth.user.role === 'admin' || auth.user.can?.includes('payroll.create');
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
         { title: 'Payroll', href: '/payrolls' },
@@ -62,10 +65,10 @@ export default function PayrollIndex({ payrolls, flash }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manajemen Payroll" />
-            <div className="mx-auto max-w-7xl p-6">
+            <div className="flex flex-col gap-6 p-6">
                 
                 {/* Header & Generate Card */}
-                <div className="mb-8 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                     <div className="border-b border-neutral-200 bg-neutral-50 px-6 py-4 dark:border-neutral-800 dark:bg-neutral-950">
                         <div className="flex items-center gap-3">
                             <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
@@ -78,58 +81,62 @@ export default function PayrollIndex({ payrolls, flash }: Props) {
                         </div>
                     </div>
                     
-                    <form onSubmit={handleGenerate} className="flex flex-col gap-4 p-6 sm:flex-row sm:items-end">
-                        <div className="flex-1">
-                            <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Pilih Periode (Bulan & Tahun)
-                            </label>
-                            <input
-                                type="month"
-                                value={data.periode}
-                                onChange={e => setData('periode', e.target.value)}
-                                className="block w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                                required
-                            />
-                            {errors.periode && <p className="mt-1 text-xs text-red-500">{errors.periode}</p>}
-                        </div>
-                        <div className="flex-1">
-                            <label className="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                                Catatan (Opsional)
-                            </label>
-                            <input
-                                type="text"
-                                value={data.notes}
-                                onChange={e => setData('notes', e.target.value)}
-                                placeholder="Misal: Termasuk bonus Q1"
-                                className="block w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={processing || isGenerating}
-                            className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            <Play className="size-4" />
-                            {processing || isGenerating ? 'Memproses...' : 'Generate Payroll'}
-                        </button>
-                    </form>
+                    {canCreate && (
+                        <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+                            <div className="w-full">
+                                <label className="mb-1.5 block text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                                    Periode (Bulan & Tahun)
+                                </label>
+                                <input
+                                    type="month"
+                                    value={data.periode}
+                                    onChange={e => setData('periode', e.target.value)}
+                                    className="block w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                    required
+                                />
+                                {errors.periode && <p className="mt-1 text-xs text-red-500">{errors.periode}</p>}
+                            </div>
+                            <div className="w-full">
+                                <label className="mb-1.5 block text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                                    Catatan (Opsional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={data.notes}
+                                    onChange={e => setData('notes', e.target.value)}
+                                    placeholder="Misal: Termasuk bonus Q1"
+                                    className="block w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                />
+                            </div>
+                            <div className="flex items-end">
+                                <button
+                                    type="submit"
+                                    disabled={processing || isGenerating}
+                                    className="inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    <Play className="size-4" />
+                                    {processing || isGenerating ? 'Memproses...' : 'Generate Payroll'}
+                                </button>
+                            </div>
+                        </form>
+                    )}
                 </div>
 
                 {/* Payroll History List */}
-                <div className="rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-700">
                     <div className="border-b border-neutral-200 px-6 py-4 dark:border-neutral-800">
                         <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Riwayat Payroll</h2>
                     </div>
                     
-                    <div className="overflow-x-auto">
+
                         <table className="w-full text-left text-sm text-neutral-600 dark:text-neutral-400">
                             <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300">
                                 <tr>
-                                    <th className="px-6 py-4">Periode</th>
-                                    <th className="px-6 py-4">Tanggal Proses</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Diproses Oleh</th>
-                                    <th className="px-6 py-4 text-right">Aksi</th>
+                                    <th className="px-4 py-3">Periode</th>
+                                    <th className="px-4 py-3">Tanggal Proses</th>
+                                    <th className="px-4 py-3">Status</th>
+                                    <th className="px-4 py-3">Diproses Oleh</th>
+                                    <th className="px-4 py-3 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -142,12 +149,12 @@ export default function PayrollIndex({ payrolls, flash }: Props) {
                                 ) : (
                                     payrolls.data.map((payroll) => (
                                         <tr key={payroll.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                                            <td className="px-6 py-4 font-medium text-neutral-900 dark:text-white">
+                                            <td className="px-4 py-4 font-medium text-neutral-900 dark:text-white">
                                                 {formatPeriode(payroll.periode)}
                                                 {payroll.notes && <div className="mt-1 text-xs font-normal text-neutral-500">{payroll.notes}</div>}
                                             </td>
-                                            <td className="px-6 py-4">{new Date(payroll.tanggal_proses).toLocaleDateString('id-ID')}</td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-4 text-sm text-neutral-500 dark:text-neutral-400">{new Date(payroll.tanggal_proses).toLocaleDateString('id-ID')}</td>
+                                            <td className="px-4 py-4 text-sm">
                                                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                                     payroll.status === 'finalized' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                                                     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
@@ -155,13 +162,13 @@ export default function PayrollIndex({ payrolls, flash }: Props) {
                                                     {payroll.status === 'finalized' ? 'Final' : 'Draft'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">{payroll.processed_by?.name || '-'}</td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-4 py-4 text-sm text-neutral-500 dark:text-neutral-400">{payroll.processed_by?.name || '-'}</td>
+                                            <td className="px-4 py-4 text-right">
                                                 <div className="flex justify-end gap-3">
                                                     <Link href={`/payrolls/${payroll.id}`} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" title="Lihat Detail & Slip Gaji">
                                                         <Eye className="size-4.5" />
                                                     </Link>
-                                                    {payroll.status !== 'finalized' && (
+                                                    {payroll.status !== 'finalized' && canCreate && (
                                                         <button onClick={() => handleDelete(payroll.id, payroll.periode)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Hapus Data">
                                                             <Trash2 className="size-4.5" />
                                                         </button>
@@ -174,19 +181,20 @@ export default function PayrollIndex({ payrolls, flash }: Props) {
                             </tbody>
                         </table>
                     </div>
-                </div>
 
-                {/* Pagination */}
                 {payrolls.links && payrolls.links.length > 3 && (
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-1">
-                        {payrolls.links.map((link, i) => (
-                            <Link
-                                key={i}
-                                href={link.url || '#'}
-                                className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'} border border-neutral-200 dark:border-neutral-700 ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-neutral-500">Menampilkan {payrolls.from}-{payrolls.to} dari {payrolls.total} data</p>
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                            {payrolls.links.map((link, i) => (
+                                <Link
+                                    key={i}
+                                    href={link.url || '#'}
+                                    className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'} border border-neutral-200 dark:border-neutral-700 ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

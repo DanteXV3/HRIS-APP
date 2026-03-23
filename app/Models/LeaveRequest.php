@@ -33,8 +33,8 @@ class LeaveRequest extends Model
     protected function casts(): array
     {
         return [
-            'tanggal_mulai' => 'date',
-            'tanggal_selesai' => 'date',
+            'tanggal_mulai' => 'date:Y-m-d',
+            'tanggal_selesai' => 'date:Y-m-d',
             'supervisor_approved_at' => 'datetime',
             'manager_approved_at' => 'datetime',
         ];
@@ -58,5 +58,15 @@ class LeaveRequest extends Model
     public function approvedByManager(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'approved_by_manager_id');
+    }
+
+    public function isPendingFirstApproval(): bool
+    {
+        return $this->supervisor_status === 'pending' && $this->status === 'pending';
+    }
+
+    public function isPendingSecondApproval(): bool
+    {
+        return $this->supervisor_status === 'approved' && $this->manager_status === 'pending' && $this->status === 'partially_approved';
     }
 }

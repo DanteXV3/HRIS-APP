@@ -32,6 +32,11 @@ const statusColors: Record<string, string> = {
 };
 
 export default function EmployeeIndex() {
+    const { auth } = usePage<{ auth: { user: any } }>().props;
+    const canCreate = auth.user.role === 'admin' || auth.user.can?.includes('employee.create');
+    const canEdit = auth.user.role === 'admin' || auth.user.can?.includes('employee.edit');
+    const canViewOthers = auth.user.role === 'admin' || auth.user.can?.includes('employee.view');
+    
     const { employees, departments, workLocations, lokasiKerjaList, filters } = usePage<{ props: Props }>().props as unknown as Props;
 
     function handleSearch(e: React.FormEvent<HTMLFormElement>) {
@@ -75,14 +80,18 @@ export default function EmployeeIndex() {
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">Kelola data seluruh karyawan perusahaan</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <button onClick={handleExport}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 w-full sm:w-auto">
-                            Download Excel
-                        </button>
-                        <Link href="/employees/create"
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 w-full sm:w-auto">
-                            <Plus className="h-4 w-4" /> Tambah Karyawan
-                        </Link>
+                        {canViewOthers && (
+                            <button onClick={handleExport}
+                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 w-full sm:w-auto">
+                                Download Excel
+                            </button>
+                        )}
+                        {canCreate && (
+                            <Link href="/employees/create"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 w-full sm:w-auto">
+                                <Plus className="h-4 w-4" /> Tambah Karyawan
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -159,10 +168,12 @@ export default function EmployeeIndex() {
                                                 <Link href={`/employees/${emp.id}`} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 dark:hover:bg-neutral-800">
                                                     <Eye className="h-4 w-4" />
                                                 </Link>
-                                                <Link href={`/employees/${emp.id}/edit`} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-amber-600 dark:hover:bg-neutral-800">
-                                                    <Edit className="h-4 w-4" />
-                                                </Link>
-                                                {emp.is_active && (
+                                                {canEdit && (
+                                                    <Link href={`/employees/${emp.id}/edit`} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover: amber-600 dark:hover:bg-neutral-800">
+                                                        <Edit className="h-4 w-4" />
+                                                    </Link>
+                                                )}
+                                                {canEdit && emp.is_active && (
                                                     <button onClick={() => handleDeactivate(emp.id)} className="rounded-lg p-1.5 text-neutral-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
                                                         <UserX className="h-4 w-4" />
                                                     </button>

@@ -21,6 +21,17 @@ export interface WorkLocation {
     updated_at: string;
 }
 
+export interface WorkingLocation {
+    id: number;
+    name: string;
+    latitude: number;
+    longitude: number;
+    radius: number;
+    employees_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Position {
     id: number;
     name: string;
@@ -65,12 +76,20 @@ export interface Employee {
     department_id: number;
     position_id: number;
     work_location_id: number | null;
+    working_location_id: number | null;
+    report_to: number | null;
     shift_id: number | null;
     status_kepegawaian: 'tetap' | 'kontrak' | 'probation' | 'magang';
-    lokasi_kerja?: string | null;
     hire_date: string;
     end_date: string | null;
     is_active: boolean;
+    dashboard_config?: {
+        attendance_widget?: boolean;
+        quick_actions?: boolean;
+        personal_stats?: boolean;
+        approval_stats?: boolean;
+        admin_stats?: boolean;
+    } | null;
     // Banking
     nama_bank: string | null;
     cabang_bank: string | null;
@@ -100,6 +119,7 @@ export interface Employee {
     department?: Department;
     position?: Position;
     work_location?: WorkLocation;
+    working_location?: WorkingLocation;
     // Timestamps
     created_at: string;
     updated_at: string;
@@ -123,10 +143,41 @@ export interface Pagination<T> {
 export interface DashboardStats {
     total_karyawan?: number;
     total_departemen?: number;
-    pengajuan_cuti_pending?: number;
+    pengajuan_cuti_pending_admin?: number;
     karyawan_baru_bulan_ini?: number;
-    total_anggota_tim?: number;
+    karyawan_cuti_hari_ini_admin?: number;
+    form_keluar_hari_ini_admin?: number;
+    pengajuan_cuti_pending_approval?: number;
     belum_absen_hari_ini?: number;
-    karyawan_cuti_hari_ini?: number;
-    form_keluar_hari_ini?: number;
+    karyawan_cuti_hari_ini_approval?: number;
+    form_keluar_hari_ini_approval?: number;
+    pengajuan_cuti_pending_personal?: number;
+}
+
+export interface Overtime {
+    id: number;
+    creator_id: number;
+    tanggal: string;
+    jam_mulai: string;
+    jam_berakhir: string;
+    durasi: number;
+    working_location_id?: number | null;
+    lokasi_kerja: string;
+    keperluan: string;
+    status: 'pending' | 'partially_approved' | 'approved' | 'rejected';
+    supervisor_status: 'pending' | 'approved' | 'rejected';
+    manager_status: 'pending' | 'approved' | 'rejected';
+    supervisor_notes?: string | null;
+    manager_notes?: string | null;
+    approved_by_supervisor_id?: number | null;
+    approved_by_manager_id?: number | null;
+    supervisor_approved_at?: string | null;
+    manager_approved_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    creator: Employee;
+    employees: Employee[];
+    working_location?: WorkingLocation | null;
+    approved_by_supervisor?: Employee | null;
+    approved_by_manager?: Employee | null;
 }

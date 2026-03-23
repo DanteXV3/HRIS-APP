@@ -11,6 +11,9 @@ class WorkLocationController extends Controller
 {
     public function index(Request $request)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('location.manage')) {
+            abort(403);
+        }
         $locations = WorkLocation::withCount('employees')
             ->when($request->search, function ($q, $search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -28,16 +31,22 @@ class WorkLocationController extends Controller
 
     public function create()
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('location.manage')) {
+            abort(403);
+        }
         return Inertia::render('work-locations/form');
     }
 
     public function store(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('location.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:work_locations,code',
             'address' => 'nullable|string',
-            'logo' => 'nullable|image|max:2048', // max 2MB
+            'logo' => 'nullable|image|max:2048',
             'payroll_cutoff_date' => 'nullable|integer|min:1|max:31',
         ]);
 
@@ -53,6 +62,9 @@ class WorkLocationController extends Controller
 
     public function edit(WorkLocation $workLocation)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('location.manage')) {
+            abort(403);
+        }
         return Inertia::render('work-locations/form', [
             'location' => $workLocation,
         ]);
@@ -60,6 +72,9 @@ class WorkLocationController extends Controller
 
     public function update(Request $request, WorkLocation $workLocation)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('location.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:work_locations,code,' . $workLocation->id,
@@ -83,6 +98,9 @@ class WorkLocationController extends Controller
 
     public function destroy(WorkLocation $workLocation)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('location.manage')) {
+            abort(403);
+        }
         if ($workLocation->employees()->exists()) {
             return back()->with('error', 'Perusahaan tidak bisa dihapus karena masih memiliki karyawan.');
         }

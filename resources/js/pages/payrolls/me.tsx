@@ -46,51 +46,48 @@ export default function MyPayroll({ payrolls }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Gaji Saya" />
-            <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-                <div className="sm:flex sm:items-center">
-                    <div className="flex-auto">
-                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Gaji Saya</h1>
-                        <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                            Daftar slip gaji Anda yang sudah difinalisasi.
-                        </p>
-                    </div>
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Gaji Saya</h1>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        Daftar slip gaji Anda yang sudah difinalisasi.
+                    </p>
                 </div>
 
-                <div className="mt-8 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
                             <thead className="bg-neutral-50 dark:bg-neutral-800/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Periode</th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Total Pendapatan</th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Total Potongan</th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Gaji Bersih (Take Home Pay)</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Slip Gaji</th>
+                                    <th className="px-4 py-3 text-left">Periode</th>
+                                    <th className="px-4 py-3 text-right">Pendapatan</th>
+                                    <th className="px-4 py-3 text-right">Potongan</th>
+                                    <th className="px-4 py-3 text-right">Gaji Bersih</th>
+                                    <th className="px-4 py-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
                                 {payrolls.data.length > 0 ? (
                                     payrolls.data.map((item) => (
                                         <tr key={item.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                                            <td className="whitespace-nowrap px-6 py-4 font-medium text-neutral-900 dark:text-white">
+                                            <td className="px-4 py-4 font-medium text-neutral-900 dark:text-white">
                                                 {formatPeriode(item.payroll?.periode)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-neutral-600 dark:text-neutral-300">
+                                            <td className="px-4 py-4 text-right text-sm text-neutral-600 dark:text-neutral-300">
                                                 {formatCurrency(item.total_pendapatan)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-red-600 dark:text-red-400">
+                                            <td className="px-4 py-4 text-right text-sm text-red-600 dark:text-red-400">
                                                 {formatCurrency(item.total_potongan)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-bold text-green-600 dark:text-green-400">
+                                            <td className="px-4 py-4 text-right text-sm font-bold text-green-600 dark:text-green-400">
                                                 {formatCurrency(item.gaji_bersih)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="px-4 py-4 text-center">
                                                 <a
                                                     href={`/payrolls/${item.payroll_id}/items/${item.id}/pdf`}
                                                     className="inline-flex items-center rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                                                 >
-                                                    <Download className="mr-1.5 h-3.5 w-3.5" />
-                                                    Download PDF
+                                                    <Download className="size-3.5" />
                                                 </a>
                                             </td>
                                         </tr>
@@ -110,17 +107,19 @@ export default function MyPayroll({ payrolls }: Props) {
                     </div>
                 </div>
 
-                {/* Pagination */}
                 {payrolls.links && payrolls.links.length > 3 && (
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-1">
-                        {payrolls.links.map((link, i) => (
-                            <a
-                                key={i}
-                                href={link.url || '#'}
-                                className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'} border border-neutral-200 dark:border-neutral-700`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
+                    <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+                        <p className="text-sm text-neutral-500">Menampilkan {payrolls.from}-{payrolls.to} dari {payrolls.total} data</p>
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                            {payrolls.links.map((link, i) => (
+                                <a
+                                    key={i}
+                                    href={link.url || '#'}
+                                    className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'} border border-neutral-200 dark:border-neutral-700`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

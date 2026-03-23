@@ -8,8 +8,11 @@ interface Props {
     departments: { id: number; name: string }[];
     positions: { id: number; name: string; department_id: number; grade: string }[];
     workLocations: { id: number; name: string }[];
+    workingLocations: { id: number; name: string }[];
     shifts: { id: number; name: string; jam_masuk: string; jam_pulang: string }[];
-    lokasiKerjaList: string[];
+    permissions: { id: number; name: string; module: string }[];
+    userPermissions?: number[];
+    allEmployees: { id: number; nama: string; nik: string }[];
 }
 
 // Defined OUTSIDE the component to prevent re-creation on every render
@@ -20,7 +23,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 const inputClass = "mt-1 block w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white";
 
 export default function EmployeeForm() {
-    const { employee, departments, positions, workLocations, shifts, lokasiKerjaList } = usePage<{ props: Props }>().props as unknown as Props;
+    const { employee, departments, positions, workLocations, workingLocations, shifts, permissions, userPermissions, allEmployees } = usePage<{ props: Props }>().props as unknown as Props;
     const isEditing = !!employee;
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -50,8 +53,9 @@ export default function EmployeeForm() {
         department_id: employee?.department_id?.toString() ?? '',
         position_id: employee?.position_id?.toString() ?? '',
         work_location_id: employee?.work_location_id?.toString() ?? '',
-        lokasi_kerja: employee?.lokasi_kerja ?? '',
+        working_location_id: employee?.working_location_id?.toString() ?? '',
         shift_id: employee?.shift_id?.toString() ?? '',
+        report_to: employee?.report_to?.toString() ?? '',
         status_kepegawaian: employee?.status_kepegawaian ?? 'tetap',
         hire_date: employee?.hire_date?.substring(0, 10) ?? '',
         end_date: employee?.end_date?.substring(0, 10) ?? '',
@@ -76,6 +80,14 @@ export default function EmployeeForm() {
         pinjaman_koperasi: employee?.pinjaman_koperasi ?? 0,
         potongan_lain_1: employee?.potongan_lain_1 ?? 0,
         potongan_lain_2: employee?.potongan_lain_2 ?? 0,
+        dashboard_config: employee?.dashboard_config ?? {
+            attendance_widget: true,
+            quick_actions: true,
+            personal_stats: true,
+            approval_stats: false,
+            admin_stats: false,
+        },
+        permissions: userPermissions ?? [],
     });
 
     const filteredPositions = data.department_id
@@ -221,6 +233,15 @@ export default function EmployeeForm() {
                             {errors.department_id && <p className="mt-1 text-xs text-red-500">{errors.department_id}</p>}
                         </div>
                         <div>
+                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Lapor Ke (Report To)</label>
+                            <select value={data.report_to} onChange={e => setData('report_to', e.target.value)}
+                                className={inputClass}>
+                                <option value="">-- Tanpa Atasan --</option>
+                                {allEmployees.map(emp => <option key={emp.id} value={emp.id}>{emp.nik} - {emp.nama}</option>)}
+                            </select>
+                            {errors.report_to && <p className="mt-1 text-xs text-red-500">{errors.report_to}</p>}
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Jabatan <span className="text-red-500">*</span></label>
                             <select value={data.position_id} onChange={e => setData('position_id', e.target.value)}
                                 className={inputClass} required>
@@ -254,19 +275,12 @@ export default function EmployeeForm() {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Lokasi Kerja</label>
-                            <input
-                                type="text"
-                                list="lokasi-kerja-list"
-                                value={data.lokasi_kerja}
-                                onChange={e => setData('lokasi_kerja', e.target.value)}
-                                className={inputClass}
-                                placeholder="Ketik atau pilih lokasi"
-                            />
-                            <datalist id="lokasi-kerja-list">
-                                {(lokasiKerjaList || []).map(lokasi => <option key={lokasi} value={lokasi} />)}
-                            </datalist>
-                            {errors.lokasi_kerja && <p className="mt-1 text-xs text-red-500">{errors.lokasi_kerja}</p>}
+                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Lokasi Kerja (Penempatan)</label>
+                            <select value={data.working_location_id} onChange={e => setData('working_location_id', e.target.value)} className={inputClass}>
+                                <option value="">Pilih Lokasi Kerja (Penempatan)</option>
+                                {workingLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                            </select>
+                            {errors.working_location_id && <p className="mt-1 text-xs text-red-500">{errors.working_location_id}</p>}
                         </div>
                         {renderInput("Tanggal Masuk", "hire_date", "date", "", true)}
                         {renderInput("Tanggal Berakhir", "end_date", "date")}
@@ -351,6 +365,72 @@ export default function EmployeeForm() {
                                     </ul>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                    
+                    {/* Privileges & Dashboard Config */}
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <SectionTitle>🔐 Hak Akses & Konfigurasi</SectionTitle>
+                        <div className="col-span-full space-y-4">
+                            {/* Dashboard Configuration Module */}
+                            <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+                                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-bold">Konfigurasi Dashboard</h3>
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {[
+                                        { key: 'attendance_widget', label: 'Presensi Hari Ini' },
+                                        { key: 'quick_actions', label: 'Akses Cepat' },
+                                        { key: 'personal_stats', label: 'Status Saya' },
+                                        { key: 'approval_stats', label: 'Ringkasan Tim' },
+                                        { key: 'admin_stats', label: 'Ringkasan Perusahaan' },
+                                    ].map((item) => (
+                                        <label key={item.key} className="flex items-center gap-3 space-x-2 rounded-md border border-transparent p-2 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={!!(data.dashboard_config && data.dashboard_config[item.key])}
+                                                onChange={e => {
+                                                    const newConfig = { ...(data.dashboard_config || {}) };
+                                                    newConfig[item.key] = e.target.checked;
+                                                    setData('dashboard_config', newConfig);
+                                                }}
+                                                className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
+                                            />
+                                            <span className="text-sm text-neutral-700 dark:text-neutral-300">{item.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Permissions Modules */}
+                            {Object.entries(
+                                permissions.reduce((acc, curr) => {
+                                    if (!acc[curr.module]) acc[curr.module] = [];
+                                    acc[curr.module].push(curr);
+                                    return acc;
+                                }, {} as Record<string, typeof permissions>)
+                            ).map(([module, perms]) => (
+                                <div key={module} className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+                                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{module}</h3>
+                                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        {perms.map(p => (
+                                            <label key={p.id} className="flex items-center gap-3 space-x-2 rounded-md border border-transparent p-2 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.permissions.includes(p.id)}
+                                                    onChange={e => {
+                                                        const checked = e.target.checked;
+                                                        const newPerms = checked 
+                                                            ? [...data.permissions, p.id]
+                                                            : data.permissions.filter((id: number) => id !== p.id);
+                                                        setData('permissions', newPerms);
+                                                    }}
+                                                    className="h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900"
+                                                />
+                                                <span className="text-sm text-neutral-700 dark:text-neutral-300">{p.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

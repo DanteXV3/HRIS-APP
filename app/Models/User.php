@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -60,6 +61,11 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class);
+    }
+
     // === Role Helpers ===
 
     public function isAdmin(): bool
@@ -85,5 +91,15 @@ class User extends Authenticatable
     public function hasRole(string ...$roles): bool
     {
         return in_array($this->role, $roles);
+    }
+
+    public function hasPermission(string $slug): bool
+    {
+        // Admin always has all permissions
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->permissions()->where('slug', $slug)->exists();
     }
 }

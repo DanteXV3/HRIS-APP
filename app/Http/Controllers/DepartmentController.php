@@ -10,6 +10,9 @@ class DepartmentController extends Controller
 {
     public function index(Request $request)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('department.manage')) {
+            abort(403);
+        }
         $departments = Department::withCount('employees', 'positions')
             ->when($request->search, function ($q, $search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -27,11 +30,17 @@ class DepartmentController extends Controller
 
     public function create()
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('department.manage')) {
+            abort(403);
+        }
         return Inertia::render('departments/form');
     }
 
     public function store(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('department.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:departments,code',
@@ -45,6 +54,9 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('department.manage')) {
+            abort(403);
+        }
         return Inertia::render('departments/form', [
             'department' => $department,
         ]);
@@ -52,6 +64,9 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('department.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:departments,code,' . $department->id,
@@ -65,6 +80,9 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('department.manage')) {
+            abort(403);
+        }
         if ($department->employees()->exists()) {
             return back()->with('error', 'Departemen tidak bisa dihapus karena masih memiliki karyawan.');
         }

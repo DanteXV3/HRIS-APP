@@ -9,6 +9,9 @@ interface Props {
     leaveRequest: any;
     userRole: string;
     currentEmployeeId: number | null;
+    canFirstApproval: boolean;
+    canSecondApproval: boolean;
+    isAdmin: boolean;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -18,23 +21,25 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Menunggu', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-    partially_approved: { label: 'Disetujui Sebagian', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    pending: { label: 'Menunggu Persetujuan 1', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+    partially_approved: { label: 'Menunggu Persetujuan 2', color: 'bg-blue-100 text-blue-800 border-blue-200' },
     approved: { label: 'Disetujui', color: 'bg-green-100 text-green-800 border-green-200' },
     rejected: { label: 'Ditolak', color: 'bg-red-100 text-red-800 border-red-200' },
     cancelled: { label: 'Dibatalkan', color: 'bg-neutral-100 text-neutral-800 border-neutral-200' },
 };
 
 export default function LeaveShow() {
-    const { leaveRequest: lr, userRole, currentEmployeeId } = usePage<{ props: Props }>().props as unknown as Props;
+    const { leaveRequest: lr, canFirstApproval, canSecondApproval, isAdmin } = usePage<{ props: Props }>().props as unknown as Props;
     const [sendingWa, setSendingWa] = useState(false);
     const cfg = statusConfig[lr.status] || statusConfig.pending;
 
     const canApprove = () => {
-        if (lr.status === 'approved' || lr.status === 'rejected') return false;
-        if (userRole === 'admin') return true;
-        if (lr.employee_id === currentEmployeeId) return false;
-        if ((userRole === 'manager' || userRole === 'supervisor') && (lr.supervisor_status === 'pending' || lr.manager_status === 'pending')) return true;
+        if (lr.status === 'approved' || lr.status === 'rejected' || lr.status === 'cancelled') return false;
+        if (isAdmin) return true;
+        
+        if (lr.status === 'pending' && canFirstApproval) return true;
+        if (lr.status === 'partially_approved' && canSecondApproval) return true;
+        
         return false;
     };
 

@@ -8,6 +8,8 @@ use App\Models\Position;
 use App\Models\User;
 use App\Models\Shift;
 use App\Models\WorkLocation;
+use App\Models\WorkingLocation;
+use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,6 +22,9 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('employee.view')) {
+            abort(403);
+        }
         $employees = Employee::with(['department', 'position', 'workLocation'])
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($q) use ($search) {
@@ -30,7 +35,7 @@ class EmployeeController extends Controller
             })
             ->when($request->department_id, fn($q, $v) => $q->where('department_id', $v))
             ->when($request->work_location_id, fn($q, $v) => $q->where('work_location_id', $v))
-            ->when($request->lokasi_kerja, fn($q, $v) => $q->where('lokasi_kerja', $v))
+            ->when($request->working_location_id, fn($q, $v) => $q->where('working_location_id', $v))
             ->when($request->status_kepegawaian, fn($q, $v) => $q->where('status_kepegawaian', $v))
             ->when($request->is_active !== null && $request->is_active !== '', function ($q) use ($request) {
                 $q->where('is_active', $request->boolean('is_active'));
@@ -42,29 +47,40 @@ class EmployeeController extends Controller
         return Inertia::render('employees/index', [
             'employees' => $employees,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'workLocations' => WorkLocation::orderBy('name')->get(['id', 'name']),
-            'lokasiKerjaList' => Employee::whereNotNull('lokasi_kerja')->where('lokasi_kerja', '!=', '')->distinct()->pluck('lokasi_kerja'),
-            'filters' => $request->only('search', 'department_id', 'status_kepegawaian', 'is_active', 'work_location_id', 'lokasi_kerja'),
+            'workLocations' => WorkLocation::all(),
+            'workingLocations' => WorkingLocation::all(),
+            'filters' => $request->only('search', 'department_id', 'status_kepegawaian', 'is_active', 'work_location_id', 'working_location_id'),
         ]);
     }
     public function export(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('employee.view')) {
+            abort(403);
+        }
         return Excel::download(new EmployeeExport($request->all()), 'data_karyawan_'.date('Ymd').'.xlsx');
     }
 
     public function create()
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('employee.create')) {
+            abort(403);
+        }
         return Inertia::render('employees/form', [
             'departments' => Department::orderBy('name')->get(['id', 'name']),
             'positions' => Position::with('department')->orderBy('name')->get(['id', 'name', 'department_id', 'grade']),
             'workLocations' => WorkLocation::orderBy('name')->get(['id', 'name', 'code']),
+            'workingLocations' => WorkingLocation::orderBy('name')->get(['id', 'name']),
             'shifts' => Shift::orderBy('name')->get(['id', 'name', 'jam_masuk', 'jam_pulang']),
-            'lokasiKerjaList' => Employee::whereNotNull('lokasi_kerja')->where('lokasi_kerja', '!=', '')->distinct()->pluck('lokasi_kerja'),
+            'permissions' => Permission::orderBy('module')->orderBy('name')->get(),
+            'allEmployees' => Employee::orderBy('nama')->get(['id', 'nama', 'nik']),
         ]);
     }
 
     public function store(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('employee.create')) {
+            abort(403);
+        }
         $validated = $this->validateEmployee($request);
 
         DB::transaction(function () use ($validated, $request) {
@@ -90,14 +106,25 @@ class EmployeeController extends Controller
             $validated['user_id'] = $user->id;
 
             Employee::create($validated);
+
+            // Sync permissions
+            if ($request->has('permissions')) {
+                $user->permissions()->sync($request->permissions);
+            }
         });
 
         return redirect()->route('employees.index')
             ->with('success', 'Karyawan berhasil ditambahkan.');
     }
 
-    public function show(Employee $employee)
+    public function show(Request $request, Employee $employee)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('employee.view')) {
+            // Also allow if viewing self?
+            if ($request->user()->employee?->id !== $employee->id) {
+                abort(403);
+            }
+        }
         $employee->load(['department', 'position', 'workLocation', 'user']);
 
         return Inertia::render('employees/show', [
@@ -107,18 +134,27 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('employee.edit')) {
+            abort(403);
+        }
         return Inertia::render('employees/form', [
             'employee' => $employee,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
             'positions' => Position::with('department')->orderBy('name')->get(['id', 'name', 'department_id', 'grade']),
             'workLocations' => WorkLocation::orderBy('name')->get(['id', 'name', 'code']),
+            'workingLocations' => WorkingLocation::orderBy('name')->get(['id', 'name']),
             'shifts' => Shift::orderBy('name')->get(['id', 'name', 'jam_masuk', 'jam_pulang']),
-            'lokasiKerjaList' => Employee::whereNotNull('lokasi_kerja')->where('lokasi_kerja', '!=', '')->distinct()->pluck('lokasi_kerja'),
+            'permissions' => Permission::orderBy('module')->orderBy('name')->get(),
+            'userPermissions' => $employee->user ? $employee->user->permissions->pluck('id') : [],
+            'allEmployees' => Employee::where('id', '!=', $employee->id)->orderBy('nama')->get(['id', 'nama', 'nik']),
         ]);
     }
 
     public function update(Request $request, Employee $employee)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('employee.edit')) {
+            abort(403);
+        }
         $validated = $this->validateEmployee($request, $employee->id);
 
         DB::transaction(function () use ($validated, $request, $employee) {
@@ -144,6 +180,11 @@ class EmployeeController extends Controller
             }
 
             $employee->update($validated);
+
+            // Sync permissions
+            if ($employee->user && $request->has('permissions')) {
+                $employee->user->permissions()->sync($request->permissions);
+            }
         });
 
         return redirect()->route('employees.index')
@@ -152,6 +193,9 @@ class EmployeeController extends Controller
 
     public function destroy(Employee $employee)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('employee.edit')) {
+            abort(403);
+        }
         DB::transaction(function () use ($employee) {
             // Deactivate instead of delete
             $employee->update(['is_active' => false, 'end_date' => now()]);
@@ -267,12 +311,13 @@ class EmployeeController extends Controller
             'no_bpjs_ketenagakerjaan' => 'nullable|string|max:30',
             'no_bpjs_kesehatan' => 'nullable|string|max:30',
             // Employment
+            'report_to' => 'nullable|exists:employees,id',
             'department_id' => 'required|exists:departments,id',
             'position_id' => 'required|exists:positions,id',
             'work_location_id' => 'required|exists:work_locations,id',
+            'working_location_id' => 'nullable|exists:working_locations,id',
             'shift_id' => 'nullable|exists:shifts,id',
             'status_kepegawaian' => 'required|in:tetap,kontrak,probation,magang',
-            'lokasi_kerja' => 'nullable|string|max:255',
             'hire_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:hire_date',
             // Banking
@@ -300,6 +345,7 @@ class EmployeeController extends Controller
             'pinjaman_koperasi' => 'nullable|numeric|min:0',
             'potongan_lain_1' => 'nullable|numeric|min:0',
             'potongan_lain_2' => 'nullable|numeric|min:0',
+            'dashboard_config' => 'nullable|array',
             // Files
             'photo' => 'nullable|image|max:2048',
             'file_ktp' => 'nullable|file|max:5120',

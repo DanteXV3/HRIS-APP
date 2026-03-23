@@ -24,9 +24,36 @@ class FaceAttendanceController extends Controller
             ], 404);
         }
 
-        $employee->load('shift');
+        $employee->load(['shift', 'workingLocation']);
         $today = Carbon::today('Asia/Jakarta')->format('Y-m-d');
         $now = Carbon::now('Asia/Jakarta');
+
+        // GEOFENCING CHECK
+        $isOutsideRadius = false;
+        $distance = null;
+        $workingLocation = $employee->workingLocation;
+
+        if ($workingLocation && $workingLocation->latitude && $workingLocation->longitude && $request->latitude && $request->longitude) {
+            $theta = $request->longitude - $workingLocation->longitude;
+            $dist = sin(deg2rad($request->latitude)) * sin(deg2rad((float)$workingLocation->latitude)) +  cos(deg2rad($request->latitude)) * cos(deg2rad((float)$workingLocation->latitude)) * cos(deg2rad($theta));
+            $dist = acos($dist);
+            $dist = rad2deg($dist);
+            $miles = $dist * 60 * 1.1515;
+            $distance = $miles * 1609.344; // convert to meters
+
+            if ($distance > $workingLocation->radius) {
+                $isOutsideRadius = true;
+                if (!$request->remark) {
+                    return response()->json([
+                        'success' => false,
+                        'outside_radius' => true,
+                        'distance' => round($distance),
+                        'radius' => $workingLocation->radius,
+                        'message' => 'Anda berada di luar radius lokasi kerja (' . round($distance) . 'm). Silahkan berikan keterangan/catatan.'
+                    ], 400);
+                }
+            }
+        }
 
         // 1. Check if Attendance already exists today
         $attendance = Attendance::where('employee_id', $employee->id)
@@ -59,11 +86,14 @@ class FaceAttendanceController extends Controller
                 'jam_pulang' => $jamPulang,
                 'early_in_minutes' => $earlyInMinutes,
                 'late_in_minutes' => $lateInMinutes,
+                'is_late' => $lateInMinutes > 0,
+                'late_minutes' => $lateInMinutes,
                 'status' => 'hadir',
                 'is_holiday' => false,
                 'verified_lembur_minutes' => 0,
                 'clock_in_lat' => $request->latitude,
                 'clock_in_lng' => $request->longitude,
+                'notes' => $request->remark ? '[LUAR RADIUS: ' . round($distance) . 'm] ' . $request->remark : null,
             ]);
 
             return response()->json([
@@ -98,6 +128,7 @@ class FaceAttendanceController extends Controller
                 'overtime_minutes' => $overtimeMinutes,
                 'clock_out_lat' => $request->latitude,
                 'clock_out_lng' => $request->longitude,
+                'notes' => $request->remark ? ($attendance->notes ? $attendance->notes . ' | ' : '') . '[OUT RADIUS: ' . round($distance) . 'm] ' . $request->remark : $attendance->notes,
             ]);
 
             return response()->json([

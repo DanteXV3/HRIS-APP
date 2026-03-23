@@ -76,6 +76,7 @@ export default function WorkLocationForm({ location }: Props) {
                         {errors.payroll_cutoff_date && <p className="mt-1 text-xs text-red-500">{errors.payroll_cutoff_date}</p>}
                     </div>
 
+
                     <div>
                         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Logo Perusahaan (Untuk Kop Surat / Slip Gaji)</label>
                         <input type="file" accept="image/*" onChange={e => setData('logo', e.target.files?.[0] || null)}

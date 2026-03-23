@@ -3,6 +3,7 @@ export type User = {
     name: string;
     role: 'admin' | 'manager' | 'supervisor' | 'staff';
     email: string;
+    can?: string[];
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

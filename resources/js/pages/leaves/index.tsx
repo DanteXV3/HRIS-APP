@@ -45,8 +45,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-    pending: { label: 'Menunggu', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
-    partially_approved: { label: 'Disetujui Sebagian', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', icon: Clock },
+    pending: { label: 'Menunggu Persetujuan 1', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
+    partially_approved: { label: 'Menunggu Persetujuan 2', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', icon: Clock },
     approved: { label: 'Disetujui', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle2 },
     rejected: { label: 'Ditolak', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
     cancelled: { label: 'Dibatalkan', color: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-300', icon: XCircle },
@@ -109,38 +109,36 @@ export default function LeaveIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pengajuan Cuti" />
-            <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-                <div className="sm:flex sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Pengajuan Cuti / Izin</h1>
-                        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
                             Kelola pengajuan cuti, izin, dan sakit karyawan.
                         </p>
                     </div>
-                    <div className="mt-4 sm:mt-0 flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                         {pendingCount > 0 && (userRole === 'admin' || userRole === 'manager' || userRole === 'supervisor') && (
-                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 w-full sm:w-auto justify-center">
                                 <Clock className="w-4 h-4" />
-                                {pendingCount} menunggu persetujuan
+                                {pendingCount} menunggu
                             </span>
                         )}
                         <Link
                             href="/leaves/create"
-                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 w-full sm:w-auto"
                         >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Ajukan Cuti
+                            <Plus className="h-4 w-4" /> Ajukan Cuti
                         </Link>
                     </div>
                 </div>
 
-                <form onSubmit={handleFilter} className="mt-6 flex flex-wrap gap-3 items-end">
-                    <div>
-                        <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">Status</label>
+                <form onSubmit={handleFilter} className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+                    <div className="w-full sm:w-48">
                         <select
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value)}
-                            className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                            className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
                         >
                             <option value="">Semua Status</option>
                             <option value="pending">Menunggu</option>
@@ -149,15 +147,13 @@ export default function LeaveIndex() {
                             <option value="rejected">Ditolak</option>
                         </select>
                     </div>
-                    <button type="submit" className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100">
-                        <Filter className="w-4 h-4 inline mr-1" />
+                    <button type="submit" className="rounded-lg bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">
                         Filter
                     </button>
                 </form>
 
-                <div className="mt-6 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+                <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
                             <thead className="bg-neutral-50 dark:bg-neutral-800/50">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Tanggal</th>
@@ -195,11 +191,11 @@ export default function LeaveIndex() {
                                                 </td>
                                                 <td className="whitespace-nowrap px-4 py-3 text-center">
                                                     <div className="flex flex-col items-center gap-1 text-[10px]">
-                                                        <span className={`px-1.5 py-0.5 rounded ${lr.supervisor_status === 'approved' ? 'bg-green-100 text-green-700' : lr.supervisor_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                                                            SPV: {lr.supervisor_status}
+                                                        <span className={`px-1.5 py-0.5 rounded font-medium ${lr.supervisor_status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : lr.supervisor_status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'}`}>
+                                                            1st: {lr.supervisor_status === 'approved' ? 'OK' : lr.supervisor_status === 'rejected' ? 'NO' : 'WAIT'}
                                                         </span>
-                                                        <span className={`px-1.5 py-0.5 rounded ${lr.manager_status === 'approved' ? 'bg-green-100 text-green-700' : lr.manager_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-600'}`}>
-                                                            MGR: {lr.manager_status}
+                                                        <span className={`px-1.5 py-0.5 rounded font-medium ${lr.manager_status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : lr.manager_status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'}`}>
+                                                            2nd: {lr.manager_status === 'approved' ? 'OK' : lr.manager_status === 'rejected' ? 'NO' : 'WAIT'}
                                                         </span>
                                                     </div>
                                                 </td>
@@ -249,25 +245,26 @@ export default function LeaveIndex() {
                             </tbody>
                         </table>
                     </div>
-                </div>
 
-                {/* Pagination */}
                 {leaveRequests.links && leaveRequests.links.length > 3 && (
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-1">
-                        {leaveRequests.links.map((link, i) => {
-                            const isPrev = link.label.includes('Previous');
-                            const isNext = link.label.includes('Next');
-                            const label = isPrev ? '«' : isNext ? '»' : link.label;
-                            return link.url ? (
-                                <button key={i} onClick={() => router.get(link.url!)} className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300'} border border-neutral-200 dark:border-neutral-700`}>
-                                    <span dangerouslySetInnerHTML={{ __html: label }} />
-                                </button>
-                            ) : (
-                                <span key={i} className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1 text-sm text-neutral-400 dark:border-neutral-800">
-                                    <span dangerouslySetInnerHTML={{ __html: label }} />
-                                </span>
-                            );
-                        })}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-neutral-500">Menampilkan {leaveRequests.from}-{leaveRequests.to} dari {leaveRequests.total} data</p>
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                            {leaveRequests.links.map((link, i) => {
+                                const isPrev = link.label.includes('Previous');
+                                const isNext = link.label.includes('Next');
+                                const label = isPrev ? '«' : isNext ? '»' : link.label;
+                                return link.url ? (
+                                    <button key={i} onClick={() => router.get(link.url!)} className={`rounded-md px-3 py-1 text-sm ${link.active ? 'bg-blue-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-300'} border border-neutral-200 dark:border-neutral-700`}>
+                                        <span dangerouslySetInnerHTML={{ __html: label }} />
+                                    </button>
+                                ) : (
+                                    <span key={i} className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1 text-sm text-neutral-400 dark:border-neutral-800">
+                                        <span dangerouslySetInnerHTML={{ __html: label }} />
+                                    </span>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </div>

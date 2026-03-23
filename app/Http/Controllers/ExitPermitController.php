@@ -23,8 +23,8 @@ class ExitPermitController extends Controller
 
         $query = ExitPermit::with(['employee.department', 'employee.position'])->latest();
 
-        if ($user->role === 'admin') {
-            // Admin sees all
+        if ($user->role === 'admin' || $user->hasPermission('exit_permit.view_others')) {
+            // Admin or user with special permission sees all
         } elseif (in_array($user->role, ['manager', 'supervisor'])) {
             // Supervisor/Manager sees same department
             $query->whereHas('employee', function ($q) use ($employee) {

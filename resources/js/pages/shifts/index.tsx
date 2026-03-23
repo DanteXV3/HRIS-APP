@@ -96,26 +96,24 @@ export default function ShiftIndex({ shifts, filters }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manajemen Shift Kerja" />
             
-            <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-                <div className="sm:flex sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Shift Kerja</h1>
-                        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
                             Kelola jadwal jam masuk dan pulang karyawan.
                         </p>
                     </div>
-                    <div className="mt-4 sm:mt-0 sm:ml-4">
-                        <button
-                            onClick={openCreateModal}
-                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-                        >
-                            <Plus className="mr-2 h-4 w-4" /> Tambah Shift
-                        </button>
-                    </div>
+                    <button
+                        onClick={openCreateModal}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 w-full sm:w-auto"
+                    >
+                        <Plus className="h-4 w-4" /> Tambah Shift
+                    </button>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <form onSubmit={handleSearch} className="relative max-w-sm flex-1">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <form onSubmit={handleSearch} className="relative w-full sm:max-w-xs">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <Search className="h-4 w-4 text-neutral-400" />
                         </div>
@@ -129,37 +127,36 @@ export default function ShiftIndex({ shifts, filters }: Props) {
                     </form>
                 </div>
 
-                <div className="mt-6 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+                <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
                             <thead className="bg-neutral-50 dark:bg-neutral-800/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Nama Shift</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Jam Masuk</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Jam Pulang</th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Aksi</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Nama Shift</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Jam Masuk</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Jam Pulang</th>
+                                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
                                 {shifts.data.length > 0 ? (
                                     shifts.data.map((shift) => (
                                         <tr key={shift.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                                            <td className="whitespace-nowrap px-6 py-4 font-medium text-neutral-900 dark:text-white">
+                                            <td className="whitespace-nowrap px-4 py-4 font-medium text-neutral-900 dark:text-white">
                                                 {shift.name}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center text-neutral-600 dark:text-neutral-300">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center text-neutral-600 dark:text-neutral-300">
                                                 <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                                                     <Clock className="w-3.5 h-3.5" />
                                                     {formatTime(shift.jam_masuk)}
                                                 </span>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center text-neutral-600 dark:text-neutral-300">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center text-neutral-600 dark:text-neutral-300">
                                                 <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
                                                     <Clock className="w-3.5 h-3.5" />
                                                     {formatTime(shift.jam_pulang)}
                                                 </span>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                            <td className="whitespace-nowrap px-4 py-4 text-right text-sm">
                                                 <button onClick={() => openEditModal(shift)} className="mr-3 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                                                     <Edit2 className="h-4 w-4" />
                                                 </button>
@@ -180,7 +177,6 @@ export default function ShiftIndex({ shifts, filters }: Props) {
                         </table>
                     </div>
                 </div>
-            </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="sm:max-w-md bg-white dark:bg-neutral-900">

@@ -14,7 +14,6 @@ class WorkLocation extends Model
         'name',
         'code',
         'address',
-        'logo',
         'payroll_cutoff_date',
     ];
 

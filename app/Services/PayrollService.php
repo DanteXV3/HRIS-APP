@@ -109,13 +109,21 @@ class PayrollService
 
         // 4. Dynamic Allowances via Attendance
         $attendances = \App\Models\Attendance::where('employee_id', $employee->id)
-            ->whereBetween('tanggal', [$attStartDate, $attEndDate])
+            ->whereDate('tanggal', '>=', $attStartDate)
+            ->whereDate('tanggal', '<=', $attEndDate)
             ->get();
             
-        $jumlahHadir = $attendances->where('status', 'hadir')->count();
+        // Uang Makan: Only count if present, not late, and has both clock in and out
+        $uangMakanCount = $attendances->where('status', 'hadir')
+            ->filter(function($att) {
+                // Check both is_late flag and late_in_minutes for robustness
+                $isLate = (bool)$att->is_late || (int)$att->late_in_minutes > 0;
+                return !$isLate && !is_null($att->clock_in) && !is_null($att->clock_out);
+            })->count();
+            
         $totalOvertimeMenit = $attendances->sum('verified_lembur_minutes');
 
-        $uangMakan = $jumlahHadir * (float)$employee->uang_makan;
+        $uangMakan = $uangMakanCount * (float)$employee->uang_makan;
         $uangLembur = ($totalOvertimeMenit / 60) * (float)$employee->uang_lembur;
 
         // 5. Snapshot Earnings

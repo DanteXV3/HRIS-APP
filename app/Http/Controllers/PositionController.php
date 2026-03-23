@@ -11,6 +11,9 @@ class PositionController extends Controller
 {
     public function index(Request $request)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('position.manage')) {
+            abort(403);
+        }
         $positions = Position::with('department')
             ->withCount('employees')
             ->when($request->search, function ($q, $search) {
@@ -32,6 +35,9 @@ class PositionController extends Controller
 
     public function create()
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('position.manage')) {
+            abort(403);
+        }
         return Inertia::render('positions/form', [
             'departments' => Department::orderBy('name')->get(['id', 'name']),
         ]);
@@ -39,6 +45,9 @@ class PositionController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('position.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
@@ -53,6 +62,9 @@ class PositionController extends Controller
 
     public function edit(Position $position)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('position.manage')) {
+            abort(403);
+        }
         return Inertia::render('positions/form', [
             'position' => $position,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
@@ -61,6 +73,9 @@ class PositionController extends Controller
 
     public function update(Request $request, Position $position)
     {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('position.manage')) {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
@@ -75,6 +90,9 @@ class PositionController extends Controller
 
     public function destroy(Position $position)
     {
+        if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('position.manage')) {
+            abort(403);
+        }
         if ($position->employees()->exists()) {
             return back()->with('error', 'Jabatan tidak bisa dihapus karena masih memiliki karyawan.');
         }

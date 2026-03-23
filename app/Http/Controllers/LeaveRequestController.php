@@ -32,21 +32,38 @@ class LeaveRequestController extends Controller
             'approvedByManager',
         ])->latest();
 
-        if ($user->role === 'admin') {
-            // Admin sees all
-        } elseif ($user->role === 'manager') {
-            // Manager sees own department + own requests
-            $query->whereHas('employee', function ($q) use ($employee) {
-                $q->where('department_id', $employee->department_id);
-            });
-        } elseif ($user->role === 'supervisor') {
-            // Supervisor sees own department
-            $query->whereHas('employee', function ($q) use ($employee) {
-                $q->where('department_id', $employee->department_id);
+        if ($user->isAdmin() || $user->hasPermission('leave.view_others')) {
+            // Admin or HR with view_others sees all
+        } elseif ($employee) {
+            $query->where(function ($q) use ($user, $employee, $request) {
+                // Own requests
+                $q->where('employee_id', $employee->id);
+
+                // Requests from subordinates (First Approval)
+                if ($user->hasPermission('leave.first_approval')) {
+                    $q->orWhereHas('employee', function ($sq) use ($employee) {
+                        $sq->where('report_to', $employee->id);
+                    });
+                }
+
+                // Requests pending second approval
+                if ($user->hasPermission('leave.second_approval')) {
+                    $q->orWhere('status', 'partially_approved');
+                }
+
+                // Involvement Logic: can always see requests handled personally (history)
+                $q->orWhere('approved_by_supervisor_id', $employee->id)
+                  ->orWhere('approved_by_manager_id', $employee->id);
+
+                // Global History Permission: can see all approved/rejected/cancelled
+                if ($user->hasPermission('leave.view_history')) {
+                    $q->orWhereIn('status', ['approved', 'rejected', 'cancelled']);
+                }
             });
         } else {
-            // Staff sees only own
-            $query->where('employee_id', $employee->id);
+            // No employee record? Only see nothing or own if exists... 
+            // Better to show empty for security
+            $query->whereRaw('1=0');
         }
 
         if ($request->filled('status')) {
@@ -54,17 +71,27 @@ class LeaveRequestController extends Controller
         }
 
         $attendancesPending = 0;
-        if (in_array($user->role, ['admin', 'manager', 'supervisor'])) {
-            $pendingQ = LeaveRequest::where(function ($q) {
-                $q->where('status', 'pending')
-                  ->orWhere('status', 'partially_approved');
-            });
-
-            if ($user->role !== 'admin' && $employee) {
-                $pendingQ->whereHas('employee', function ($q) use ($employee) {
-                    $q->where('department_id', $employee->department_id);
+        if ($user->isAdmin() || $user->hasPermission('leave.first_approval') || $user->hasPermission('leave.second_approval')) {
+            $pendingQ = LeaveRequest::query();
+            
+            if (!$user->isAdmin()) {
+                $pendingQ->where(function($q) use ($user, $employee) {
+                    // First approval pending for subordinates
+                    if ($user->hasPermission('leave.first_approval')) {
+                        $q->orWhere(function($sq) use ($employee) {
+                            $sq->where('status', 'pending')
+                               ->whereHas('employee', fn($ssq) => $ssq->where('report_to', $employee->id));
+                        });
+                    }
+                    // Second approval pending
+                    if ($user->hasPermission('leave.second_approval')) {
+                        $q->orWhere('status', 'partially_approved');
+                    }
                 });
+            } else {
+                $pendingQ->whereIn('status', ['pending', 'partially_approved']);
             }
+            
             $attendancesPending = $pendingQ->count();
         }
 
@@ -155,6 +182,11 @@ class LeaveRequestController extends Controller
             $attachmentPath = $request->file('attachment')->store('leave-attachments', 'public');
         }
 
+        // Calculate jumlah_hari
+        $start = \Carbon\Carbon::parse($validated['tanggal_mulai']);
+        $end = \Carbon\Carbon::parse($validated['tanggal_selesai']);
+        $jumlahHari = $start->diffInDays($end) + 1;
+
         LeaveRequest::create([
             'employee_id' => $employee->id,
             'leave_type_id' => $validated['leave_type_id'],
@@ -180,6 +212,9 @@ class LeaveRequestController extends Controller
             'leaveRequest' => $leave,
             'userRole' => Auth::user()->role,
             'currentEmployeeId' => Auth::user()->employee?->id,
+            'canFirstApproval' => Auth::user()->hasPermission('leave.first_approval') && Auth::user()->employee?->id === $leave->employee->report_to,
+            'canSecondApproval' => Auth::user()->hasPermission('leave.second_approval'),
+            'isAdmin' => Auth::user()->isAdmin(),
         ]);
     }
 
@@ -202,22 +237,17 @@ class LeaveRequestController extends Controller
         }
 
         $submitter = $leave->employee;
-        $submitterRole = $submitter->user?->role ?? 'staff';
 
-        // Determine which level to approve
-        if ($user->role === 'admin') {
-            // Admin can fully approve
-            $leave->update([
-                'supervisor_status' => 'approved',
-                'approved_by_supervisor_id' => $approver->id,
-                'supervisor_approved_at' => now(),
-                'manager_status' => 'approved',
-                'approved_by_manager_id' => $approver->id,
-                'manager_approved_at' => now(),
-                'status' => 'approved',
-            ]);
-        } elseif ($leave->supervisor_status === 'pending') {
-            // First level: supervisor/manager approving supervisor_status
+        // Step 1: First Approval (Report To)
+        if ($leave->status === 'pending' && $leave->supervisor_status === 'pending') {
+            // Is this the right person?
+            $isReportTo = $approver->id === $submitter->report_to;
+            $hasPerm = $user->hasPermission('leave.first_approval');
+
+            if (!$user->isAdmin() && (!$isReportTo || !$hasPerm)) {
+                return back()->withErrors(['error' => 'Anda tidak memiliki wewenang untuk memberikan persetujuan pertama pada pengajuan ini.']);
+            }
+
             $leave->update([
                 'supervisor_status' => 'approved',
                 'approved_by_supervisor_id' => $approver->id,
@@ -225,8 +255,15 @@ class LeaveRequestController extends Controller
                 'supervisor_notes' => $request->input('notes'),
                 'status' => 'partially_approved',
             ]);
-        } elseif ($leave->supervisor_status === 'approved' && $leave->manager_status === 'pending') {
-            // Second level: manager/director approving manager_status
+        } 
+        // Step 2: Second Approval
+        elseif ($leave->status === 'partially_approved' && $leave->manager_status === 'pending') {
+            $hasPerm = $user->hasPermission('leave.second_approval');
+
+            if (!$user->isAdmin() && !$hasPerm) {
+                return back()->withErrors(['error' => 'Anda tidak memiliki wewenang untuk memberikan persetujuan kedua.']);
+            }
+
             $leave->update([
                 'manager_status' => 'approved',
                 'approved_by_manager_id' => $approver->id,
@@ -234,6 +271,19 @@ class LeaveRequestController extends Controller
                 'manager_notes' => $request->input('notes'),
                 'status' => 'approved',
             ]);
+        } else {
+            // If admin wants to force approve everything at once
+            if ($user->isAdmin()) {
+                $leave->update([
+                    'supervisor_status' => 'approved',
+                    'approved_by_supervisor_id' => $approver->id,
+                    'supervisor_approved_at' => now(),
+                    'manager_status' => 'approved',
+                    'approved_by_manager_id' => $approver->id,
+                    'manager_approved_at' => now(),
+                    'status' => 'approved',
+                ]);
+            }
         }
 
         // If fully approved and it's Cuti Tahunan, decrement balance
@@ -260,9 +310,11 @@ class LeaveRequestController extends Controller
             return back()->withErrors(['error' => 'Akun Anda belum terhubung dengan data karyawan.']);
         }
 
+        $submitter = $leave->employee;
         $notes = $request->input('notes', '');
 
-        if ($user->role === 'admin') {
+        // If admin, we can reject immediately
+        if ($user->isAdmin()) {
             $leave->update([
                 'status' => 'rejected',
                 'manager_status' => 'rejected',
@@ -270,7 +322,18 @@ class LeaveRequestController extends Controller
                 'manager_approved_at' => now(),
                 'manager_notes' => $notes,
             ]);
-        } elseif ($leave->supervisor_status === 'pending') {
+            return back()->with('success', 'Pengajuan cuti telah ditolak oleh Admin.');
+        }
+
+        if ($leave->status === 'pending') {
+            // First level check
+            $isReportTo = $approver->id === $submitter->report_to;
+            $hasPerm = $user->hasPermission('leave.first_approval');
+
+            if (!$isReportTo || !$hasPerm) {
+                 return back()->withErrors(['error' => 'Anda tidak memiliki wewenang untuk menolak pengajuan ini.']);
+            }
+
             $leave->update([
                 'supervisor_status' => 'rejected',
                 'approved_by_supervisor_id' => $approver->id,
@@ -278,7 +341,12 @@ class LeaveRequestController extends Controller
                 'supervisor_notes' => $notes,
                 'status' => 'rejected',
             ]);
-        } elseif ($leave->manager_status === 'pending') {
+        } elseif ($leave->status === 'partially_approved') {
+            $hasPerm = $user->hasPermission('leave.second_approval');
+            if (!$hasPerm) {
+                return back()->withErrors(['error' => 'Anda tidak memiliki wewenang untuk menolak pengajuan ini pada tahap kedua.']);
+            }
+
             $leave->update([
                 'manager_status' => 'rejected',
                 'approved_by_manager_id' => $approver->id,
@@ -296,34 +364,26 @@ class LeaveRequestController extends Controller
      */
     public function whatsappUrl(LeaveRequest $leave)
     {
-        $leave->load('employee.department');
+        $leave->load(['employee.department', 'employee.user']);
         $submitter = $leave->employee;
-        $submitterRole = $submitter->user?->role ?? 'staff';
 
         // Find the next approver
         $approver = null;
 
-        if ($leave->supervisor_status === 'pending') {
-            // Need supervisor or manager of same department
-            $approver = Employee::whereHas('user', function ($q) {
-                $q->whereIn('role', ['supervisor', 'manager']);
-            })->where('department_id', $submitter->department_id)
-              ->where('id', '!=', $submitter->id)
-              ->first();
-        } elseif ($leave->manager_status === 'pending') {
-            // First: try manager of same department
-            $approver = Employee::whereHas('user', function ($q) {
-                $q->where('role', 'manager');
-            })->where('department_id', $submitter->department_id)
-              ->where('id', '!=', $submitter->id)
-              ->first();
+        if ($leave->status === 'pending') {
+            // Need the Report To person
+            $approver = $submitter->reportTo;
 
-            // Fallback: admin (cross-department)
-            if (!$approver) {
-                $approver = Employee::whereHas('user', function ($q) {
-                    $q->where('role', 'admin');
-                })->where('id', '!=', $submitter->id)->first();
+            // Check if they have the permission
+            if ($approver && $approver->user && !$approver->user->hasPermission('leave.first_approval') && !$approver->user->isAdmin()) {
+                 // They don't have permission! Maybe notify admin?
             }
+        } elseif ($leave->status === 'partially_approved') {
+            // Need someone with second_approval permission
+            $approver = Employee::whereHas('user', function ($q) {
+                $q->whereHas('permissions', fn($sq) => $sq->where('slug', 'leave.second_approval'))
+                  ->orWhere('role', 'admin');
+            })->where('id', '!=', $submitter->id)->first();
         }
 
         if (!$approver || !$approver->no_telpon_1) {

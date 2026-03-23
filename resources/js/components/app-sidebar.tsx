@@ -17,9 +17,62 @@ import { dashboard } from '@/routes';
 import type { NavItem, User } from '@/types';
 
 export function AppSidebar() {
-    const { auth } = usePage<{ auth: { user: User } }>().props;
-    const role = auth.user.role;
-    const isAdmin = role === 'admin';
+    const { auth } = usePage<any>().props;
+    const user = auth?.user;
+    const isAdmin = user?.role === 'admin';
+
+    const canViewEmployees = isAdmin || user?.can?.includes('employee.view');
+    const canViewAttendance = isAdmin || user?.can?.includes('attendance.view_others');
+    const canViewPayroll = isAdmin || user?.can?.includes('payroll.view');
+    const canManageDept = isAdmin || user?.can?.includes('department.manage');
+    const canManagePosition = isAdmin || user?.can?.includes('position.manage');
+    const canManageShift = isAdmin || user?.can?.includes('shift.manage');
+    const canManageLocation = isAdmin || user?.can?.includes('location.manage');
+    const canViewWorkingLocation = isAdmin || user?.can?.includes('working_location.view');
+
+    const canCreateOvertime = isAdmin || user?.can?.includes('overtime.create');
+    const canApproveOvertime = isAdmin || user?.can?.includes('overtime.first_approval') || user?.can?.includes('overtime.second_approval') || user?.can?.includes('overtime.view_all');
+
+    // 1. Tentang Saya (Always visible, items might depend on role/permissions)
+    const tentangSayaItems: NavItem[] = [
+        { title: 'Profil Saya', href: '/profile', icon: Users },
+        { title: 'Absensi Saya', href: '/my-attendance', icon: CalendarClock },
+        { title: 'Gaji Saya', href: '/my-payroll', icon: Receipt },
+        { title: 'Pengajuan Cuti', href: '/leaves', icon: FileText },
+        { title: 'Form Keluar', href: '/exit-permits', icon: DoorOpen },
+    ];
+
+    if (canCreateOvertime || canApproveOvertime) {
+        tentangSayaItems.push({ title: 'Form Lembur', href: '/overtimes', icon: CalendarClock });
+    }
+
+    // 2. Management Karyawan
+    const managementItems: NavItem[] = [];
+    if (canViewEmployees) managementItems.push({ title: 'Data Karyawan', href: '/employees', icon: Users });
+    if (canViewAttendance) managementItems.push({ title: 'Data Absensi', href: '/attendances', icon: CalendarClock });
+    if (canViewPayroll) managementItems.push({ title: 'Payroll & Slip Gaji', href: '/payrolls', icon: Receipt });
+    
+    // Add Administrative views for Leave, Exit Permits, and Overtime
+    const canApproveLeave = isAdmin || auth.user.can?.includes('leave.first_approval') || auth.user.can?.includes('leave.second_approval');
+    const canViewOthersExit = isAdmin || auth.user.can?.includes('exit_permit.view_others');
+
+    if (canApproveLeave) {
+        managementItems.push({ title: 'Data Pengajuan Cuti', href: '/leaves', icon: FileText });
+    }
+    if (canViewOthersExit) {
+        managementItems.push({ title: 'Data Form Keluar', href: '/exit-permits', icon: DoorOpen });
+    }
+    if (canApproveOvertime) {
+        managementItems.push({ title: 'Data Pengajuan Lembur', href: '/overtimes', icon: CalendarClock });
+    }
+
+    // 3. Setting
+    const settingItems: NavItem[] = [];
+    if (canManageDept) settingItems.push({ title: 'Departemen', href: '/departments', icon: Building2 });
+    if (canManagePosition) settingItems.push({ title: 'Jabatan', href: '/positions', icon: Briefcase });
+    if (canManageShift) settingItems.push({ title: 'Shift Kerja', href: '/shifts', icon: CalendarClock });
+    if (canManageLocation) settingItems.push({ title: 'Data Perusahaan', href: '/work-locations', icon: Building2 });
+    if (canViewWorkingLocation) settingItems.push({ title: 'Lokasi Kerja', href: '/working-locations', icon: MapPin });
 
     const mainNavItems: NavItem[] = [
         {
@@ -27,80 +80,31 @@ export function AppSidebar() {
             href: dashboard(),
             icon: LayoutGrid,
         },
+        {
+            title: 'Tentang Saya',
+            href: '#',
+            icon: Users,
+            items: tentangSayaItems,
+        },
     ];
 
-    if (isAdmin) {
-        mainNavItems.push(
-            {
-                title: 'Data Karyawan',
-                href: '/employees',
-                icon: Users,
-            },
-            {
-                title: 'Data Absensi',
-                href: '/attendances',
-                icon: CalendarClock,
-            },
-            {
-                title: 'Payroll & Slip Gaji',
-                href: '/payrolls',
-                icon: Receipt,
-            },
-            {
-                title: 'Departemen',
-                href: '/departments',
-                icon: Building2,
-            },
-            {
-                title: 'Jabatan',
-                href: '/positions',
-                icon: Briefcase,
-            },
-            {
-                title: 'Shift Kerja',
-                href: '/shifts',
-                icon: CalendarClock,
-            },
-            {
-                title: 'Perusahaan',
-                href: '/work-locations',
-                icon: MapPin,
-            },
-        );
-    } else {
-        // Employee-only visible items
-        mainNavItems.push(
-            {
-                title: 'Profil Saya',
-                href: '/profile',
-                icon: Users,
-            },
-            {
-                title: 'Absensi Saya',
-                href: '/my-attendance',
-                icon: CalendarClock,
-            },
-            {
-                title: 'Gaji Saya',
-                href: '/my-payroll',
-                icon: Receipt,
-            },
-        );
+    if (managementItems.length > 0) {
+        mainNavItems.push({
+            title: 'Management Karyawan',
+            href: '#',
+            icon: Briefcase,
+            items: managementItems,
+        });
     }
 
-    // Leave & Exit — visible to all roles
-    mainNavItems.push(
-        {
-            title: 'Pengajuan Cuti',
-            href: '/leaves',
-            icon: FileText,
-        },
-        {
-            title: 'Form Keluar',
-            href: '/exit-permits',
-            icon: DoorOpen,
-        },
-    );
+    if (settingItems.length > 0) {
+        mainNavItems.push({
+            title: 'Setting',
+            href: '#',
+            icon: Building2,
+            items: settingItems,
+        });
+    }
 
     return (
         <Sidebar collapsible="icon" variant="inset">

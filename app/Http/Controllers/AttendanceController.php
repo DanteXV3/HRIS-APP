@@ -16,7 +16,16 @@ class AttendanceController extends Controller
 {
     public function myAttendance(Request $request)
     {
-        $employee = Employee::where('user_id', $request->user()->id)->firstOrFail();
+        $employee = Employee::where('user_id', $request->user()->id)->first();
+
+        if (!$employee) {
+            return Inertia::render('attendances/me', [
+                'attendances' => [],
+                'filters' => [],
+                'employee' => null,
+                'error' => 'Akun Anda tidak terhubung dengan data karyawan.'
+            ]);
+        }
 
         $tanggalStart = $request->input('tanggal_start');
         $tanggalEnd = $request->input('tanggal_end');
@@ -41,6 +50,9 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
+        if (!$request->user()->hasPermission('attendance.view_others')) {
+            abort(403);
+        }
         $search = $request->input('search');
         $tanggalStart = $request->input('tanggal_start');
         $tanggalEnd = $request->input('tanggal_end');
@@ -81,6 +93,10 @@ class AttendanceController extends Controller
 
     public function export(Request $request)
     {
+        if (!$request->user()->hasPermission('attendance.view_others')) {
+            abort(403);
+        }
+
         return Excel::download(
             new AttendanceExport($request->only(['search', 'tanggal_start', 'tanggal_end', 'work_location_id'])),
             'data_absensi_' . date('Ymd') . '.xlsx'
@@ -89,6 +105,10 @@ class AttendanceController extends Controller
 
     public function import(Request $request)
     {
+        if (!$request->user()->hasPermission('attendance.create_others')) {
+            abort(403);
+        }
+
         $request->validate([
             'file' => 'required|file|mimes:csv,txt|max:5120',
         ]);
@@ -199,6 +219,8 @@ class AttendanceController extends Controller
                             'jam_pulang' => $jamPulang,
                             'early_in_minutes' => $earlyInMinutes,
                             'late_in_minutes' => $lateInMinutes,
+                            'is_late' => $lateInMinutes > 0,
+                            'late_minutes' => $lateInMinutes,
                             'early_out_minutes' => $earlyOutMinutes,
                             'late_out_minutes' => $lateOutMinutes,
                             'status' => $status,
@@ -232,6 +254,10 @@ class AttendanceController extends Controller
 
     public function update(Request $request, Attendance $attendance)
     {
+        if (!$request->user()->hasPermission('attendance.edit_others')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'tanggal' => 'required|date',
             'clock_in' => 'nullable|date_format:H:i',
@@ -286,6 +312,8 @@ class AttendanceController extends Controller
             'jam_pulang' => $jamPulang,
             'early_in_minutes' => $earlyInMinutes,
             'late_in_minutes' => $lateInMinutes,
+            'is_late' => $lateInMinutes > 0,
+            'late_minutes' => $lateInMinutes,
             'early_out_minutes' => $earlyOutMinutes,
             'late_out_minutes' => $lateOutMinutes,
             'overtime_minutes' => $overtimeMinutes,
@@ -300,6 +328,10 @@ class AttendanceController extends Controller
 
     public function store(Request $request)
     {
+        if (!$request->user()->hasPermission('attendance.create_others')) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'tanggal' => 'required|date',
@@ -364,6 +396,8 @@ class AttendanceController extends Controller
                 'jam_pulang' => $jamPulang,
                 'early_in_minutes' => $earlyInMinutes,
                 'late_in_minutes' => $lateInMinutes,
+                'is_late' => $lateInMinutes > 0,
+                'late_minutes' => $lateInMinutes,
                 'early_out_minutes' => $earlyOutMinutes,
                 'late_out_minutes' => $lateOutMinutes,
                 'status' => $validated['status'],
@@ -377,8 +411,12 @@ class AttendanceController extends Controller
         return redirect()->back()->with('success', 'Data absensi manual berhasil ditambahkan.');
     }
 
-    public function destroy(Attendance $attendance)
+    public function destroy(Request $request, Attendance $attendance)
     {
+        if (!$request->user()->hasPermission('attendance.edit_others')) { // Or delete_others if we add it
+            abort(403);
+        }
+
         $attendance->delete();
 
         return redirect()->back()->with('success', 'Data absensi berhasil dihapus.');

@@ -1,5 +1,5 @@
-import { Head, useForm, router } from '@inertiajs/react';
-import { Search, Upload, FileSpreadsheet, Download, Pencil, CheckCircle2, XCircle } from 'lucide-react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
+import { Search, Upload, FileSpreadsheet, Download, Pencil, CheckCircle2, XCircle, Plus } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Pagination } from '@/types';
 import { useState, useEffect } from 'react';
@@ -44,6 +44,10 @@ interface Props {
 }
 
 export default function AttendanceIndex({ attendances, filters, employees, workLocations }: Props) {
+    const { auth } = usePage<{ auth: { user: any } }>().props;
+    const canCreate = auth.user.can?.includes('attendance.create_others') || auth.user.role === 'admin';
+    const canEdit = auth.user.can?.includes('attendance.edit_others') || auth.user.role === 'admin';
+
     const [search, setSearch] = useState(filters.search || '');
     const [tanggalStart, setTanggalStart] = useState(filters.tanggal_start || '');
     const [tanggalEnd, setTanggalEnd] = useState(filters.tanggal_end || '');
@@ -215,47 +219,51 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Data Absensi" />
             
-            <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-                <div className="sm:flex sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Data Absensi</h1>
-                        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
                             Kelola data kehadiran, periksa jam masuk/pulang, dan verifikasi lembur karyawan.
                         </p>
                     </div>
-                    <div className="mt-4 sm:mt-0 sm:ml-4 flex flex-wrap gap-3">
-                        <button
-                            onClick={handleExport}
-                            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                        >
-                            <FileSpreadsheet className="mr-2 h-4 w-4" />
-                            Download Excel
-                        </button>
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                        >
-                            + Tambah Manual
-                        </button>
-                        <button
-                            onClick={() => setShowUploadModal(true)}
-                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Import CSV
-                        </button>
+                    <div className="flex flex-wrap gap-2">
+                        {auth.user.can?.includes('attendance.view_others') || auth.user.role === 'admin' ? (
+                            <button
+                                onClick={handleExport}
+                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 w-full sm:w-auto"
+                            >
+                                <FileSpreadsheet className="h-4 w-4" /> Download Excel
+                            </button>
+                        ) : null}
+                        {canCreate && (
+                            <>
+                                <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 w-full sm:w-auto"
+                                >
+                                    <Plus className="h-4 w-4" /> Tambah Manual
+                                </button>
+                                <button
+                                    onClick={() => setShowUploadModal(true)}
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 w-full sm:w-auto"
+                                >
+                                    <Upload className="h-4 w-4" /> Import CSV
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <form onSubmit={handleSearch} className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
+                <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+                    <form onSubmit={handleSearch} className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 w-full">
                                         <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
                                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                                 <Search className="h-4 w-4 text-neutral-400" />
                                             </div>
                                             <input
                                                 type="text"
-                                                className="block w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-neutral-500 focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:placeholder-neutral-400"
+                                                className="block w-full sm:max-w-xs rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-neutral-500 focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:placeholder-neutral-400"
                                                 placeholder="Cari nama atau NIK..."
                                                 value={search}
                                                 onChange={(e) => setSearch(e.target.value)}
@@ -304,26 +312,25 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                                     </form>
                 </div>
 
-                <div className="mt-6 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+                <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <table className="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
                             <thead className="bg-neutral-50 dark:bg-neutral-800/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Tanggal</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Karyawan</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Shift</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Absen (In/Out)</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Late / Early</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Lembur</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Aksi</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Tanggal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Karyawan</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Shift</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Absen (In/Out)</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Late / Early</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Lembur</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
                                 {attendances.data.length > 0 ? (
                                     attendances.data.map((att) => (
                                         <tr key={att.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                                            <td className="whitespace-nowrap px-6 py-4">
+                                            <td className="whitespace-nowrap px-4 py-4">
                                                 <div className="text-sm font-medium text-neutral-900 dark:text-white">
                                                     {new Date(att.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                 </div>
@@ -331,23 +338,23 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                                                     <span className="inline-flex mt-1 items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">Holiday</span>
                                                 ) : null}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4">
+                                            <td className="whitespace-nowrap px-4 py-4">
                                                 <div className="text-sm font-medium text-neutral-900 dark:text-white">{att.employee?.nama}</div>
                                                 <div className="text-xs text-neutral-500 dark:text-neutral-400">{att.employee?.nik}</div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <div className="text-xs font-medium text-blue-700 dark:text-blue-400">{att.employee?.shift?.name || 'No Shift'}</div>
                                                 <div className="text-[10px] text-neutral-500 dark:text-neutral-400">
                                                     {att.jam_masuk ? att.jam_masuk.substring(0,5) : '-'} / {att.jam_pulang ? att.jam_pulang.substring(0,5) : '-'}
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <div className="text-sm text-neutral-900 dark:text-white">
                                                     {att.clock_in ? att.clock_in.substring(11, 16) : '-'} — 
                                                     {att.clock_out ? att.clock_out.substring(11, 16) : '-'}
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <div className="flex flex-col items-center gap-1">
                                                     {att.late_in_minutes > 0 && <span className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded">Late {formatMinutes(att.late_in_minutes)}</span>}
                                                     {att.early_out_minutes > 0 && <span className="text-[10px] bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 px-1.5 py-0.5 rounded">Early {formatMinutes(att.early_out_minutes)}</span>}
@@ -356,7 +363,7 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize
                                                     ${att.status === 'hadir' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
                                                       att.status === 'sakit' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : 
@@ -366,19 +373,21 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                                                     {att.status}
                                                 </span>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
                                                 <div className="flex flex-col items-center">
                                                     <div className="text-xs text-neutral-500 dark:text-neutral-400">Raw: {formatMinutes(att.overtime_minutes)}</div>
                                                     <div className="text-sm font-semibold text-green-600 dark:text-green-400">✔ {formatMinutes(att.verified_lembur_minutes)}</div>
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-center">
-                                                <button
-                                                    onClick={() => openEditModal(att)}
-                                                    className="inline-flex items-center justify-center p-2 rounded hover:bg-neutral-100 text-blue-600 dark:hover:bg-neutral-800 dark:text-blue-500 transition-colors"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
+                                            <td className="whitespace-nowrap px-4 py-4 text-center">
+                                                {canEdit && (
+                                                    <button
+                                                        onClick={() => openEditModal(att)}
+                                                        className="inline-flex items-center justify-center p-2 rounded hover:bg-neutral-100 text-blue-600 dark:hover:bg-neutral-800 dark:text-blue-500 transition-colors"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -391,12 +400,13 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                                 )}
                             </tbody>
                         </table>
-                    </div>
                 </div>
 
                 {/* Pagination */}
                 {attendances.links && attendances.links.length > 3 && (
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-1">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-neutral-500">Menampilkan {attendances.from}-{attendances.to} dari {attendances.total} data</p>
+                        <div className="flex flex-wrap items-center justify-center gap-1">
                         {attendances.links.map((link, i) => {
                             const isPrev = link.label.includes('Previous');
                             const isNext = link.label.includes('Next');
@@ -417,7 +427,8 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                             );
                         })}
                     </div>
-                )}
+                </div>
+            )}
             </div>
 
             {/* Upload Modal */}
@@ -587,9 +598,11 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                             </div>
                             
                             <div className="mt-6 flex items-center justify-between">
-                                <button type="button" onClick={handleDelete} className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20">
-                                    Hapus
-                                </button>
+                                {canEdit && (
+                                    <button type="button" onClick={handleDelete} className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20">
+                                        Hapus
+                                    </button>
+                                )}
                                 <div className="flex gap-3">
                                     <button type="button" onClick={() => setEditingId(null)} className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800">
                                         Batal
