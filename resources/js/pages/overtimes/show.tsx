@@ -1,6 +1,8 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Clock, FileText, CheckCircle2, XCircle, User, MapPin, Calendar, Info } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, CheckCircle2, XCircle, User, MapPin, Calendar, Info, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
+import axios from 'axios';
 import type { BreadcrumbItem, Overtime } from '@/types';
 
 interface Props {
@@ -21,6 +23,19 @@ export default function OvertimeShow() {
     const { data, setData, post, processing } = useForm({
         notes: '',
     });
+    const [sendingWa, setSendingWa] = useState(false);
+
+    const handleWhatsApp = async () => {
+        setSendingWa(true);
+        try {
+            const res = await axios.get(`/overtimes/${overtime.id}/whatsapp-url`);
+            window.open(res.data.url, '_blank');
+        } catch (error: any) {
+            alert(error.response?.data?.error || 'Gagal membuat link WhatsApp.');
+        } finally {
+            setSendingWa(false);
+        }
+    };
 
     const handleApprove = () => {
         if (confirm('Apakah Anda yakin ingin menyetujui pengajuan ini?')) {
@@ -136,6 +151,17 @@ export default function OvertimeShow() {
                             </div>
                         </div>
                     </div>
+
+                    {/* WhatsApp Button */}
+                    {(overtime.status === 'pending' || overtime.status === 'partially_approved') && (
+                        <button
+                            onClick={handleWhatsApp}
+                            disabled={sendingWa}
+                            className="flex items-center justify-center gap-2 w-full rounded-xl bg-green-500 px-6 py-3 text-sm font-bold text-white shadow-lg hover:bg-green-600 transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                            <MessageCircle className="w-5 h-5" /> {sendingWa ? 'Membuat link...' : 'Kirim WhatsApp ke Atasan'}
+                        </button>
+                    )}
 
                     {/* PDF Download Button */}
                     {overtime.status === 'approved' && (

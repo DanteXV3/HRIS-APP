@@ -100,6 +100,7 @@ export interface Employee {
     no_kontak_darurat_1: string | null;
     nama_kontak_darurat_2: string | null;
     no_kontak_darurat_2: string | null;
+    signature: string | null;
     // Salary
     gaji_pokok: number;
     tunjangan_jabatan: number;
@@ -180,4 +181,111 @@ export interface Overtime {
     working_location?: WorkingLocation | null;
     approved_by_supervisor?: Employee | null;
     approved_by_manager?: Employee | null;
+}
+
+export interface PaymentRequest {
+    id: number;
+    pr_number: string;
+    date: string;
+    company_id: number;
+    working_location_id: number;
+    department_id: number;
+    subject: string;
+    description: string;
+    amount: number;
+    paid_to: string;
+    bank_name: string | null;
+    bank_account: string | null;
+    notes: string | null;
+    status: 'pending' | 'partially_approved' | 'approved' | 'rejected';
+    
+    requested_by_id: number;
+    requested_at: string;
+    requester_signature_snapshot: string | null;
+    
+    tax_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    tax_approver_id?: number | null;
+    tax_approved_at?: string | null;
+    tax_notes?: string | null;
+    tax_signature_snapshot?: string | null;
+
+    accounting_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    accounting_approver_id?: number | null;
+    accounting_approved_at?: string | null;
+    accounting_notes?: string | null;
+    accounting_signature_snapshot?: string | null;
+
+    cost_control_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    cost_control_approver_id?: number | null;
+    cost_control_approved_at?: string | null;
+    cost_control_notes?: string | null;
+    cost_control_signature_snapshot?: string | null;
+
+    head_branch_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    head_branch_approver_id?: number | null;
+    head_branch_approved_at?: string | null;
+    head_branch_notes?: string | null;
+    head_branch_signature_snapshot?: string | null;
+
+    director_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    director_approver_id?: number | null;
+    director_approved_at?: string | null;
+    director_notes?: string | null;
+    director_signature_snapshot?: string | null;
+
+    commissioner_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    commissioner_approver_id?: number | null;
+    commissioner_approved_at?: string | null;
+    commissioner_notes?: string | null;
+    commissioner_signature_snapshot?: string | null;
+
+    advisor_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    advisor_approver_id?: number | null;
+    advisor_approved_at?: string | null;
+    advisor_notes?: string | null;
+    advisor_signature_snapshot?: string | null;
+
+    finance_status: 'pending' | 'approved' | 'rejected' | 'skipped';
+    finance_approver_id?: number | null;
+    finance_approved_at?: string | null;
+    finance_notes?: string | null;
+    finance_signature_snapshot?: string | null;
+
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    requested_by?: Employee;
+    department?: Department;
+    company?: WorkLocation;
+    work_location?: WorkingLocation;
+    attachments?: PaymentRequestAttachment[];
+    items?: PaymentRequestItem[];
+    tax_approver?: Employee;
+    accounting_approver?: Employee;
+    cost_control_approver?: Employee;
+    head_branch_approver?: Employee;
+    director_approver?: Employee;
+    commissioner_approver?: Employee;
+    advisor_approver?: Employee;
+    finance_approver?: Employee;
+}
+
+export interface PaymentRequestAttachment {
+    id: number;
+    payment_request_id: number;
+    file_path: string;
+    file_name: string;
+    created_at: string;
+}
+
+export interface PaymentRequestItem {
+    id: number;
+    payment_request_id: number;
+    description: string;
+    unit: string | null;
+    qty: number;
+    price: number;
+    amount: number;
+    created_at: string;
 }

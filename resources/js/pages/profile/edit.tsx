@@ -1,6 +1,7 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ExternalLink } from 'lucide-react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
+import SignaturePad from '@/components/signature-pad';
 import type { BreadcrumbItem, Employee } from '@/types';
 
 interface Props {
@@ -48,7 +49,14 @@ export default function ProfileEdit() {
         no_kontak_darurat_1: employee.no_kontak_darurat_1 ?? '',
         nama_kontak_darurat_2: employee.nama_kontak_darurat_2 ?? '',
         no_kontak_darurat_2: employee.no_kontak_darurat_2 ?? '',
+        signature: null as string | null,
     });
+
+    const banks = [
+        'Bank Mandiri', 'BCA', 'BRI', 'BNI', 'BSI', 'CIMB Niaga', 
+        'Danamon', 'Permata', 'OCBC NISP', 'Maybank', 'Panin', 
+        'BTN', 'Bank DKI', 'Bank Jatim', 'Bank Jabar Banten', 'Mega', 'Lainnya'
+    ];
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -187,7 +195,14 @@ export default function ProfileEdit() {
                     {/* Banking */}
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         <SectionTitle>🏦 Data Bank</SectionTitle>
-                        {renderInput("Nama Bank", "nama_bank")}
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Nama Bank</label>
+                            <select value={data.nama_bank} onChange={e => setData('nama_bank', e.target.value)} className={inputClass}>
+                                <option value="">Pilih Bank</option>
+                                {banks.map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                            {errors.nama_bank && <p className="mt-1 text-xs text-red-500">{errors.nama_bank}</p>}
+                        </div>
                         {renderInput("Cabang Bank", "cabang_bank")}
                         {renderInput("No. Rekening", "no_rekening")}
                         {renderInput("Nama Rekening", "nama_rekening")}
@@ -207,6 +222,29 @@ export default function ProfileEdit() {
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         <SectionTitle>📄 Dokumen & Lampiran</SectionTitle>
                         {renderFileInput("Pas Foto", "photo")}
+                        
+                         <div className="lg:col-span-2">
+                              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Tanda Tangan Digital</label>
+                              <SignaturePad 
+                                 onSave={(base64) => {
+                                     setData('signature', base64);
+                                 }} 
+                                 currentSignature={data.signature || employee.signature} 
+                               />
+                               <div className="mt-2 flex items-center justify-between">
+                                  <p className="text-xs text-neutral-500 italic">Tanda tangan akan tersimpan saat Anda menekan tombol "Simpan Perubahan" di bawah.</p>
+                                  {data.signature && data.signature.startsWith('data:image') && (
+                                      <button 
+                                          type="button" 
+                                          onClick={() => router.post('/profile/signature', { signature: data.signature }, { preserveScroll: true })}
+                                          className="text-xs font-bold text-blue-600 hover:underline"
+                                      >
+                                          Simpan Tanda Tangan Saja
+                                      </button>
+                                  )}
+                               </div>
+                         </div>
+
                         {renderFileInput("File KTP", "file_ktp")}
                         {renderFileInput("File NPWP", "file_npwp")}
                         {renderFileInput("File Kartu Keluarga", "file_kk")}

@@ -47,6 +47,17 @@ class PermissionSeeder extends Seeder
 
             // Exit Permit
             ['name' => 'Can see others exit permits', 'slug' => 'exit_permit.view_others', 'module' => 'Exit Permit'],
+
+            // Payment Request
+            ['name' => 'Can perform tax approval for PR', 'slug' => 'pr.approve.tax', 'module' => 'Payment Request'],
+            ['name' => 'Can perform accounting approval for PR', 'slug' => 'pr.approve.accounting', 'module' => 'Payment Request'],
+            ['name' => 'Can perform cost control approval for PR', 'slug' => 'pr.approve.cost_control', 'module' => 'Payment Request'],
+            ['name' => 'Can perform head branch approval for PR', 'slug' => 'pr.approve.head_branch', 'module' => 'Payment Request'],
+            ['name' => 'Can perform director approval for PR', 'slug' => 'pr.approve.director', 'module' => 'Payment Request'],
+            ['name' => 'Can perform commissioner approval for PR', 'slug' => 'pr.approve.commissioner', 'module' => 'Payment Request'],
+            ['name' => 'Can perform advisor approval for PR', 'slug' => 'pr.approve.advisor', 'module' => 'Payment Request'],
+            ['name' => 'Can perform finance approval for PR', 'slug' => 'pr.approve.finance', 'module' => 'Payment Request'],
+            ['name' => 'Can create PR', 'slug' => 'pr.create', 'module' => 'Payment Request'],
         ];
 
         foreach ($permissions as $permission) {

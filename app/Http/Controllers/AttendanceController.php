@@ -48,6 +48,55 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function myAttendancePdf(Request $request)
+    {
+        $employee = Employee::with(['department', 'position', 'shift', 'workLocation'])
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$employee) {
+            abort(403, 'Akun Anda tidak terhubung dengan data karyawan.');
+        }
+
+        $tanggalStart = $request->input('tanggal_start');
+        $tanggalEnd = $request->input('tanggal_end');
+
+        $attendances = Attendance::where('employee_id', $employee->id)
+            ->when($tanggalStart, function ($query, $tanggalStart) {
+                $query->where('tanggal', '>=', $tanggalStart);
+            })
+            ->when($tanggalEnd, function ($query, $tanggalEnd) {
+                $query->where('tanggal', '<=', $tanggalEnd);
+            })
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        // Prepare data with summary (single employee)
+        $data = [[
+            'employee' => $employee,
+            'attendances' => $attendances,
+            'summary' => [
+                'hadir' => $attendances->where('status', 'hadir')->count(),
+                'sakit' => $attendances->where('status', 'sakit')->count(),
+                'izin' => $attendances->where('status', 'izin')->count(),
+                'cuti' => $attendances->where('status', 'cuti')->count(),
+                'alpha' => $attendances->where('status', 'alpha')->count(),
+                'libur' => $attendances->where('status', 'libur')->count(),
+                'late' => $attendances->where('is_late', true)->count(),
+                'overtime_mins' => $attendances->sum('verified_lembur_minutes'),
+                'total_days' => $attendances->count(),
+            ]
+        ]];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.attendance_report', [
+            'data' => $data,
+            'tanggalStart' => $tanggalStart,
+            'tanggalEnd' => $tanggalEnd,
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->download('Absensi_Saya_' . $employee->nik . '_' . date('Ymd') . '.pdf');
+    }
+
     public function index(Request $request)
     {
         if (!$request->user()->hasPermission('attendance.view_others')) {
@@ -101,6 +150,71 @@ class AttendanceController extends Controller
             new AttendanceExport($request->only(['search', 'tanggal_start', 'tanggal_end', 'work_location_id'])),
             'data_absensi_' . date('Ymd') . '.xlsx'
         );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        if (!$request->user()->hasPermission('attendance.view_others')) {
+            abort(403);
+        }
+
+        $search = $request->input('search');
+        $tanggalStart = $request->input('tanggal_start');
+        $tanggalEnd = $request->input('tanggal_end');
+        $workLocationId = $request->input('work_location_id');
+
+        $attendances = Attendance::with(['employee:id,nama,nik,department_id,position_id,shift_id,work_location_id', 'employee.department', 'employee.position', 'employee.shift', 'employee.workLocation'])
+            ->when($search, function ($query, $search) {
+                $query->whereHas('employee', function ($q) use ($search) {
+                    $q->where('nama', 'like', "%{$search}%")
+                      ->orWhere('nik', 'like', "%{$search}%");
+                });
+            })
+            ->when($tanggalStart, function ($query, $tanggalStart) {
+                $query->where('tanggal', '>=', $tanggalStart);
+            })
+            ->when($tanggalEnd, function ($query, $tanggalEnd) {
+                $query->where('tanggal', '<=', $tanggalEnd);
+            })
+            ->when($workLocationId, function ($query, $workLocationId) {
+                $query->whereHas('employee', function ($q) use ($workLocationId) {
+                    $q->where('work_location_id', $workLocationId);
+                });
+            })
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $groupedAttendances = $attendances->groupBy('employee_id');
+
+        // Prepare data with summaries
+        $data = [];
+        foreach ($groupedAttendances as $employeeId => $atts) {
+            $employee = $atts->first()->employee;
+            
+            $data[] = [
+                'employee' => $employee,
+                'attendances' => $atts,
+                'summary' => [
+                    'hadir' => $atts->where('status', 'hadir')->count(),
+                    'sakit' => $atts->where('status', 'sakit')->count(),
+                    'izin' => $atts->where('status', 'izin')->count(),
+                    'cuti' => $atts->where('status', 'cuti')->count(),
+                    'alpha' => $atts->where('status', 'alpha')->count(),
+                    'libur' => $atts->where('status', 'libur')->count(),
+                    'late' => $atts->where('is_late', true)->count(),
+                    'overtime_mins' => $atts->sum('verified_lembur_minutes'),
+                    'total_days' => $atts->count(),
+                ]
+            ];
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.attendance_report', [
+            'data' => $data,
+            'tanggalStart' => $tanggalStart,
+            'tanggalEnd' => $tanggalEnd,
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->download('Laporan_Absensi_' . date('Ymd_His') . '.pdf');
     }
 
     public function import(Request $request)

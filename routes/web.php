@@ -13,6 +13,7 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\ExitPermitController;
 use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\PaymentRequestController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -42,13 +43,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('payrolls/{payroll}/finalize', [PayrollController::class, 'finalize'])->name('payrolls.finalize');
     Route::get('payrolls/{payroll}/export-excel', [PayrollController::class, 'exportExcel'])->name('payrolls.exportExcel');
     Route::get('payrolls/{payroll}/export-pdf-report', [PayrollController::class, 'exportPdfReport'])->name('payrolls.exportPdfReport');
+    Route::get('payrolls/{payroll}/export-uang-makan-lembur', [PayrollController::class, 'exportUangMakanLembur'])->name('payrolls.exportUangMakanLembur');
+    Route::get('payrolls/{payroll}/export-bpjs', [PayrollController::class, 'exportBpjs'])->name('payrolls.exportBpjs');
+    Route::get('payrolls/{payroll}/export-pph21', [PayrollController::class, 'exportPph21'])->name('payrolls.exportPph21');
+    Route::get('payrolls/{payroll}/export-attendance', [PayrollController::class, 'exportAttendance'])->name('payrolls.exportAttendance');
     Route::get('payrolls/{payroll}', [PayrollController::class, 'show'])->name('payrolls.show');
     Route::delete('payrolls/{payroll}', [PayrollController::class, 'destroy'])->name('payrolls.destroy');
 
     // Attendance (Modular Permissions)
-    Route::get('attendances/export', [AttendanceController::class, 'export'])->name('attendances.export');
     Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
     Route::post('attendances', [AttendanceController::class, 'store'])->name('attendances.store');
+    Route::get('attendances/my', [AttendanceController::class, 'myAttendance'])->name('attendances.my');
+    Route::get('attendances/export', [AttendanceController::class, 'export'])->name('attendances.export');
+    Route::get('attendances/export-pdf', [AttendanceController::class, 'exportPdf'])->name('attendances.exportPdf');
     Route::post('attendances/import', [AttendanceController::class, 'import'])->name('attendances.import');
     Route::put('attendances/{attendance}', [AttendanceController::class, 'update'])->name('attendances.update');
     Route::delete('attendances/{attendance}', [AttendanceController::class, 'destroy'])->name('attendances.destroy');
@@ -69,11 +76,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('overtimes/{overtime}/approve', [OvertimeController::class, 'approve'])->name('overtimes.approve');
     Route::post('overtimes/{overtime}/reject', [OvertimeController::class, 'reject'])->name('overtimes.reject');
     Route::get('overtimes/{overtime}/pdf', [OvertimeController::class, 'downloadPdf'])->name('overtimes.pdf');
+    Route::get('overtimes/{overtime}/whatsapp-url', [OvertimeController::class, 'whatsappUrl'])->name('overtimes.whatsappUrl');
+
+    // Payment Request
+    Route::resource('payment-requests', PaymentRequestController::class);
+    Route::post('payment-requests/{payment_request}/approve', [PaymentRequestController::class, 'approve'])->name('payment-requests.approve');
+    Route::post('payment-requests/{payment_request}/reject', [PaymentRequestController::class, 'reject'])->name('payment-requests.reject');
+    Route::get('payment-requests/{payment_request}/pdf', [PaymentRequestController::class, 'downloadPdf'])->name('payment-requests.pdf');
+    Route::get('payment-requests/{payment_request}/whatsapp', [PaymentRequestController::class, 'whatsappUrl'])->name('payment-requests.whatsapp');
 
     // Employee Self-Service
     Route::get('profile', [EmployeeController::class, 'me'])->name('profile.me');
     Route::put('profile', [EmployeeController::class, 'updateMe'])->name('profile.update-me');
+    Route::post('profile/signature', [EmployeeController::class, 'updateSignature'])->name('profile.signature');
+    Route::post('employees/{employee}/signature', [EmployeeController::class, 'updateSignature'])->name('employees.signature');
     Route::get('my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendances.me');
+    Route::get('my-attendance/pdf', [AttendanceController::class, 'myAttendancePdf'])->name('attendances.me.pdf');
     Route::get('my-payroll', [PayrollController::class, 'myPayroll'])->name('payrolls.me');
 });
 

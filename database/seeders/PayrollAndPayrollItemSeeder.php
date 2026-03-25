@@ -13,7 +13,7 @@ class PayrollAndPayrollItemSeeder extends Seeder
 {
     public function run(): void
     {
-        $csvFile = base_path('Database and Application.csv');
+        $csvFile = base_path('Database Payroll.csv');
         if (!file_exists($csvFile)) {
             $this->command->error("CSV file not found: {$csvFile}");
             return;
@@ -40,10 +40,16 @@ class PayrollAndPayrollItemSeeder extends Seeder
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($file, 0, ';')) !== FALSE) {
+                // Ensure row matches header count
+                $row = array_slice($row, 0, count($header));
+                if (count($header) !== count($row)) {
+                    continue;
+                }
+                
                 $data = array_combine($header, $row);
 
                 $nama = $data['Nama'];
-                $nik = $data['ID'];
+                $nik = $data['NIK'];
                 $bulanStr = $data['Bulan'];
                 $tahun = $data['Tahun'];
 
@@ -64,10 +70,10 @@ class PayrollAndPayrollItemSeeder extends Seeder
                     ]
                 );
 
-                // Find employee
-                $employee = Employee::where('nik', $nik)->first();
+                // Find employee by Nama (as NIKs are auto-generated and might not match CSV)
+                $employee = Employee::where('nama', $nama)->first();
                 if (!$employee) {
-                    $this->command->warn("Employee not found: {$nama} ({$nik}) - Skipping row.");
+                    $this->command->warn("Employee not found: {$nama} - Skipping row.");
                     continue;
                 }
 

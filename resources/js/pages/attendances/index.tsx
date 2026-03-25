@@ -1,5 +1,5 @@
 import { Head, useForm, router, usePage } from '@inertiajs/react';
-import { Search, Upload, FileSpreadsheet, Download, Pencil, CheckCircle2, XCircle, Plus } from 'lucide-react';
+import { Search, Upload, FileSpreadsheet, Download, Pencil, CheckCircle2, XCircle, Plus, Printer } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Pagination } from '@/types';
 import { useState, useEffect } from 'react';
@@ -87,6 +87,16 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
         if (workLocationId) params.append('work_location_id', workLocationId);
         
         window.location.href = `/attendances/export?${params.toString()}`;
+    }
+
+    function handleExportPdf() {
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (tanggalStart) params.append('tanggal_start', tanggalStart);
+        if (tanggalEnd) params.append('tanggal_end', tanggalEnd);
+        if (workLocationId) params.append('work_location_id', workLocationId);
+        
+        window.location.href = `/attendances/export-pdf?${params.toString()}`;
     }
 
     const { data: uploadData, setData: setUploadData, post: postUpload, processing: isUploading, errors: uploadErrors, reset: resetUpload } = useForm({
@@ -229,12 +239,20 @@ export default function AttendanceIndex({ attendances, filters, employees, workL
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {auth.user.can?.includes('attendance.view_others') || auth.user.role === 'admin' ? (
-                            <button
-                                onClick={handleExport}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 w-full sm:w-auto"
-                            >
-                                <FileSpreadsheet className="h-4 w-4" /> Download Excel
-                            </button>
+                            <>
+                                <button
+                                    onClick={handleExport}
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-600 shadow-sm transition-colors hover:bg-emerald-50 w-full sm:w-auto dark:bg-neutral-900 dark:hover:bg-emerald-950/30"
+                                >
+                                    <FileSpreadsheet className="h-4 w-4" /> Download Excel
+                                </button>
+                                <button
+                                    onClick={handleExportPdf}
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 w-full sm:w-auto"
+                                >
+                                    <Printer className="h-4 w-4" /> Download PDF
+                                </button>
+                            </>
                         ) : null}
                         {canCreate && (
                             <>

@@ -15,8 +15,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DepartmentSeeder::class,
             LeaveTypeSeeder::class,
+            PermissionSeeder::class,
             AdminUserSeeder::class,
             TestUserSeeder::class,
+            EmployeeSeeder::class,
             PayrollAndPayrollItemSeeder::class,
         ]);
     }

@@ -231,4 +231,61 @@ class OvertimeController extends Controller
 
         return $pdf->download("Form_Lembur_{$overtime->id}.pdf");
     }
+
+    public function whatsappUrl(Overtime $overtime)
+    {
+        $overtime->load(['creator.department', 'employees']);
+        $creator = $overtime->creator;
+
+        // Find the next approver
+        $approver = null;
+        if ($overtime->status === 'pending') {
+            $approver = $creator->reportTo;
+        } elseif ($overtime->status === 'partially_approved') {
+            $approver = Employee::whereHas('user', function ($q) {
+                $q->whereHas('permissions', fn($sq) => $sq->where('slug', 'overtime.second_approval'))
+                  ->orWhere('role', 'admin');
+            })->where('id', '!=', $creator->id)->first();
+        }
+
+        if (!$approver || !$approver->no_telpon_1) {
+            return response()->json(['error' => 'Tidak dapat menemukan atasan atau nomor telepon atasan.'], 422);
+        }
+
+        // Format phone
+        $phone = $approver->no_telpon_1;
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        } elseif (!str_starts_with($phone, '62')) {
+            $phone = '62' . $phone;
+        }
+
+        $deptName = $creator->department->name ?? '-';
+        $tanggal = \Carbon\Carbon::parse($overtime->tanggal)->format('d/m/Y');
+        $jam = $overtime->jam_mulai . ' - ' . $overtime->jam_berakhir;
+        $status = ucfirst($overtime->status);
+        $comment = $overtime->status === 'partially_approved' ? ($overtime->supervisor_notes ?: '-') : '-';
+        
+        // Employee list string
+        $employeeNames = $overtime->employees->pluck('nama')->implode(', ');
+
+        $message = "Dear Mr/Mrs {$approver->nama}\n\n" .
+                  "Silahkan diproses Pengajuan Lembur untuk :\n\n" .
+                  "Dibuat Oleh = {$creator->nama}\n" .
+                  "Department = {$deptName}\n" .
+                  "Karyawan Lembur = {$employeeNames}\n" .
+                  "Tanggal = {$tanggal}\n" .
+                  "Jam = {$jam}\n" .
+                  "Durasi = {$overtime->durasi} jam\n" .
+                  "Keperluan = {$overtime->keperluan}\n" .
+                  "Status = {$status}\n" .
+                  "Comment = {$comment}\n\n" .
+                  "Silahkan klik link dibawah ini untuk membuka aplikasi anda.\n\n" .
+                  "https://hris.bangunbejanabaja.com/overtimes/{$overtime->id}";
+
+        $url = 'https://wa.me/' . $phone . '?text=' . urlencode($message);
+
+        return response()->json(['url' => $url, 'approver_name' => $approver->nama]);
+    }
 }

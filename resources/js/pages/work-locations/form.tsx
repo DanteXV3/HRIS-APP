@@ -21,6 +21,7 @@ export default function WorkLocationForm({ location }: Props) {
         code: location?.code ?? '',
         address: location?.address ?? '',
         logo: null as File | null,
+        header_image: null as File | null,
         payroll_cutoff_date: location?.payroll_cutoff_date ?? '',
     });
 
@@ -93,6 +94,26 @@ export default function WorkLocationForm({ location }: Props) {
                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-800 hover:underline dark:text-blue-300 dark:hover:text-blue-200">
                                     <ExternalLink className="h-3.5 w-3.5" /> Lihat Ukuran Penuh
                                 </a>
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Header Perusahaan (Banner)</label>
+                        <input type="file" accept="image/*" onChange={e => setData('header_image', e.target.files?.[0] || null)}
+                            className="mt-1 block w-full text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-neutral-300 file:bg-neutral-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-neutral-700 hover:file:bg-neutral-200 dark:text-neutral-400 dark:file:bg-neutral-800 dark:file:text-neutral-300 dark:hover:file:bg-neutral-700" />
+                        {errors.header_image && <p className="mt-1 text-xs text-red-500">{errors.header_image}</p>}
+                        
+                        {isEditing && (location as any)?.header_image && (
+                            <div className="mt-3 flex flex-col gap-3 rounded-md border border-neutral-200 p-3 dark:border-neutral-700">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold">Header saat ini:</p>
+                                    <a href={`/storage/${(location as any).header_image}`} target="_blank" rel="noreferrer" 
+                                       className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-800 hover:underline dark:text-blue-300 dark:hover:text-blue-200">
+                                        <ExternalLink className="h-3.5 w-3.5" /> Lihat Ukuran Penuh
+                                    </a>
+                                </div>
+                                <img src={`/storage/${(location as any).header_image}`} alt="Header Perusahaan" className="h-24 w-full rounded object-cover bg-neutral-100" />
                             </div>
                         )}
                     </div>

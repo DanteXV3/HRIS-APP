@@ -220,23 +220,137 @@ class PayrollController extends Controller
 
     public function exportPdfReport(Request $request, Payroll $payroll)
     {
+        return $this->exportThpSummary($request, $payroll);
+    }
+
+    public function exportThpSummary(Request $request, Payroll $payroll)
+    {
         if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
             abort(403);
         }
         $payroll->load(['items.employee.workLocation']);
         
-        // Group items by company (work location)
         $groupedItems = $payroll->items->groupBy(function($item) {
             return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
         });
 
-        $pdf = Pdf::loadView('pdf.payroll_report', [
+        $pdf = Pdf::loadView('pdf.summary_thp', [
             'payroll' => $payroll,
             'groupedItems' => $groupedItems,
         ])->setPaper('A4', 'landscape');
 
-        $fileName = 'Laporan_Ringkasan_Payroll_' . $payroll->periode . '.pdf';
+        return $pdf->download('Summary_THP_' . $payroll->periode . '.pdf');
+    }
+
+    public function exportUangMakanLembur(Request $request, Payroll $payroll)
+    {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
+        $payroll->load(['items.employee.workLocation']);
         
-        return $pdf->download($fileName);
+        $groupedItems = $payroll->items->groupBy(function($item) {
+            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+        });
+
+        $pdf = Pdf::loadView('pdf.summary_uang_makan_lembur', [
+            'payroll' => $payroll,
+            'groupedItems' => $groupedItems,
+        ])->setPaper('A4', 'landscape');
+
+        return $pdf->download('Summary_Uang_Makan_Lembur_' . $payroll->periode . '.pdf');
+    }
+
+    public function exportBpjs(Request $request, Payroll $payroll)
+    {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
+        $payroll->load(['items.employee.workLocation']);
+        
+        $groupedItems = $payroll->items->groupBy(function($item) {
+            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+        });
+
+        $pdf = Pdf::loadView('pdf.summary_bpjs', [
+            'payroll' => $payroll,
+            'groupedItems' => $groupedItems,
+        ])->setPaper('A4', 'landscape');
+
+        return $pdf->download('Summary_BPJS_' . $payroll->periode . '.pdf');
+    }
+
+    public function exportPph21(Request $request, Payroll $payroll)
+    {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
+        $payroll->load(['items.employee.workLocation']);
+        
+        $groupedItems = $payroll->items->groupBy(function($item) {
+            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+        });
+
+        $pdf = Pdf::loadView('pdf.summary_pph21', [
+            'payroll' => $payroll,
+            'groupedItems' => $groupedItems,
+        ])->setPaper('A4', 'landscape');
+
+        return $pdf->download('Summary_PPh21_' . $payroll->periode . '.pdf');
+    }
+
+    public function exportAttendance(Request $request, Payroll $payroll)
+    {
+        if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
+            abort(403);
+        }
+        $payroll->load(['items.employee.workLocation']);
+
+        // Since we didn't have the full summary stored in previous versions, we calculate it here
+        foreach ($payroll->items as $item) {
+            $employee = $item->employee;
+            
+            // Re-calculate cutoff window (matching PayrollService logic)
+            $payrollYm = $payroll->periode;
+            $prevMonthDt = (new \DateTime($payroll->periode . '-01'))->modify('-1 month');
+            $prevMonthYm = $prevMonthDt->format('Y-m');
+            $payrollMonthDays = (int)date('t', strtotime($payrollYm . '-01'));
+            $cutoffDate = $employee->workLocation->payroll_cutoff_date ?? $payrollMonthDays;
+
+            if ($cutoffDate >= $payrollMonthDays) {
+                $attStartDate = $payrollYm . '-01';
+                $attEndDate = $payrollYm . '-' . $payrollMonthDays;
+            } else {
+                $startDay = $cutoffDate + 1;
+                $attStartDate = $prevMonthYm . '-' . sprintf('%02d', $startDay);
+                $attEndDate = $payrollYm . '-' . sprintf('%02d', $cutoffDate);
+            }
+
+            $atts = \App\Models\Attendance::where('employee_id', $employee->id)
+                ->whereDate('tanggal', '>=', $attStartDate)
+                ->whereDate('tanggal', '<=', $attEndDate)
+                ->get();
+
+            $item->attendance_summary = [
+                'hadir' => $atts->where('status', 'hadir')->count(),
+                'sakit' => $atts->where('status', 'sakit')->count(),
+                'izin' => $atts->where('status', 'izin')->count(),
+                'cuti' => $atts->where('status', 'cuti')->count(),
+                'alpha' => $atts->where('status', 'alpha')->count(),
+                'libur' => $atts->where('status', 'libur')->count(),
+                'late' => $atts->where('is_late', true)->count(),
+            ];
+        }
+        
+        $groupedItems = $payroll->items->groupBy(function($item) {
+            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+        });
+
+        $pdf = Pdf::loadView('pdf.report_attendance', [
+            'payroll' => $payroll,
+            'groupedItems' => $groupedItems,
+        ])->setPaper('A4', 'landscape');
+
+        return $pdf->download('Laporan_Absensi_Payroll_' . $payroll->periode . '.pdf');
     }
 }

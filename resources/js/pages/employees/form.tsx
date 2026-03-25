@@ -1,6 +1,7 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { ExternalLink } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
+import SignaturePad from '@/components/signature-pad';
 import type { BreadcrumbItem, Employee } from '@/types';
 
 interface Props {
@@ -339,6 +340,18 @@ export default function EmployeeForm() {
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <SectionTitle>📄 Dokumen & Lampiran</SectionTitle>
                         {renderFileInput("Pas Foto", "photo")}
+
+                        {isEditing && (
+                            <div className="lg:col-span-2">
+                                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Tanda Tangan Digital</label>
+                                <SignaturePad 
+                                    onSave={(base64) => router.post(`/employees/${employee.id}/signature`, { signature: base64 }, { preserveScroll: true })} 
+                                    currentSignature={employee.signature} 
+                                />
+                                <p className="mt-2 text-xs text-neutral-500">Tanda tangan ini akan digunakan pada dokumen resmi dan pengajuan pembayaran (PR).</p>
+                            </div>
+                        )}
+
                         {renderFileInput("File KTP", "file_ktp")}
                         {renderFileInput("File NPWP", "file_npwp")}
                         {renderFileInput("File Kartu Keluarga", "file_kk")}

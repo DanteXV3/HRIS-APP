@@ -210,16 +210,6 @@ export default function LeaveIndex() {
                                                         <Link href={`/leaves/${lr.id}`} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 dark:hover:bg-neutral-800" title="Detail">
                                                             <Eye className="h-4 w-4" />
                                                         </Link>
-                                                        {canApprove(lr) && (
-                                                            <>
-                                                                <button onClick={() => handleApprove(lr.id)} className="rounded-lg p-1.5 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20" title="Setujui">
-                                                                    <CheckCircle2 className="h-4 w-4" />
-                                                                </button>
-                                                                <button onClick={() => handleReject(lr.id)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title="Tolak">
-                                                                    <XCircle className="h-4 w-4" />
-                                                                </button>
-                                                            </>
-                                                        )}
                                                         {(lr.status === 'pending' || lr.status === 'partially_approved') && (
                                                             <button
                                                                 onClick={() => handleWhatsApp(lr.id)}
@@ -229,6 +219,16 @@ export default function LeaveIndex() {
                                                             >
                                                                 <MessageCircle className="h-4 w-4" />
                                                             </button>
+                                                        )}
+                                                        {canApprove(lr) && (
+                                                            <>
+                                                                <button onClick={() => handleApprove(lr.id)} className="rounded-lg p-1.5 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20" title="Setujui">
+                                                                    <CheckCircle2 className="h-4 w-4" />
+                                                                </button>
+                                                                <button onClick={() => handleReject(lr.id)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title="Tolak">
+                                                                    <XCircle className="h-4 w-4" />
+                                                                </button>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </td>

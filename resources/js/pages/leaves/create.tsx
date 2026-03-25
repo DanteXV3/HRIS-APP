@@ -47,6 +47,7 @@ export default function LeaveCreate() {
         tanggal_selesai: '',
         alasan: '',
         yang_menggantikan: '',
+        jumlah_hari: 0,
         attachment: null as File | null,
     });
 
@@ -59,9 +60,8 @@ export default function LeaveCreate() {
             const start = new Date(data.tanggal_mulai);
             const end = new Date(data.tanggal_selesai);
             const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-            setDuration(diff > 0 ? diff : 0);
-        } else {
-            setDuration(0);
+            const finalDiff = diff > 0 ? diff : 0;
+            setData('jumlah_hari', finalDiff);
         }
     }, [data.tanggal_mulai, data.tanggal_selesai]);
 
@@ -168,12 +168,26 @@ export default function LeaveCreate() {
                     </div>
 
                     {/* Duration */}
-                    {duration > 0 && (
-                        <div className="rounded-lg bg-neutral-50 p-3 text-center dark:bg-neutral-800">
-                            <span className="text-sm text-neutral-600 dark:text-neutral-400">Durasi: </span>
-                            <span className="text-lg font-bold text-neutral-900 dark:text-white">{duration} hari</span>
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                            Durasi (Hari) <span className="text-red-500">*</span>
+                        </label>
+                        <div className="mt-1 flex items-center gap-3">
+                            <input
+                                type="number"
+                                min="0.5"
+                                step="0.5"
+                                value={data.jumlah_hari}
+                                onChange={e => setData('jumlah_hari', parseFloat(e.target.value) || 0)}
+                                className={`${inputClass} max-w-[120px] text-center font-bold text-lg`}
+                                required
+                            />
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                Dihitung otomatis, tapi Anda dapat menyesuaikan jika ada hari libur dsb.
+                            </p>
                         </div>
-                    )}
+                        {errors.jumlah_hari && <p className="mt-1 text-xs text-red-500">{errors.jumlah_hari}</p>}
+                    </div>
 
                     {/* Keperluan */}
                     <div>

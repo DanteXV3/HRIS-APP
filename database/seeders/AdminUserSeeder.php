@@ -32,7 +32,17 @@ class AdminUserSeeder extends Seeder
             ['name' => 'Kantor Pusat', 'address' => 'Jakarta']
         );
 
-        // Create admin user
+        // Create super admin user (no linked employee)
+        User::firstOrCreate(
+            ['email' => 'admin@admin.com'],
+            [
+                'name' => 'Super Admin',
+                'role' => 'admin',
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        // Create secondary admin user
         $user = User::firstOrCreate(
             ['email' => 'dante.exreaper@gmail.com'],
             [

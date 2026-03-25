@@ -32,6 +32,11 @@ class PayrollItem extends Model
         'gaji_bersih',
         'iuran_bpjs_tk_perusahaan',
         'iuran_bpjs_jkn_perusahaan',
+        'uang_makan_count',
+        'lembur_minutes',
+        'bpjs_tk_base',
+        'bpjs_jkn_base',
+        'taxable_gross',
     ];
 
     protected function casts(): array
@@ -56,6 +61,11 @@ class PayrollItem extends Model
             'gaji_bersih' => 'decimal:2',
             'iuran_bpjs_tk_perusahaan' => 'decimal:2',
             'iuran_bpjs_jkn_perusahaan' => 'decimal:2',
+            'uang_makan_count' => 'integer',
+            'lembur_minutes' => 'integer',
+            'bpjs_tk_base' => 'decimal:2',
+            'bpjs_jkn_base' => 'decimal:2',
+            'taxable_gross' => 'decimal:2',
         ];
     }
 

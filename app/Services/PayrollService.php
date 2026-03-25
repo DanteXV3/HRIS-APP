@@ -290,6 +290,12 @@ class PayrollService
             // Company costs
             'iuran_bpjs_tk_perusahaan' => $iuranTkPerusahaan,
             'iuran_bpjs_jkn_perusahaan' => $iuranJknPerusahaan,
+            // Reporting metadata
+            'uang_makan_count' => $uangMakanCount,
+            'lembur_minutes' => $totalOvertimeMenit,
+            'bpjs_tk_base' => $bpjsTkBase,
+            'bpjs_jkn_base' => $bpjsJknBase,
+            'taxable_gross' => $taxableGross,
         ]);
     }
 

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class LeaveBalance extends Model
 {
     use HasFactory;
+    
+    protected $appends = ['remaining_days'];
 
     protected $fillable = [
         'employee_id',

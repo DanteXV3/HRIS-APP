@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Search, Calendar, Clock, CheckCircle2, XCircle, Filter, RotateCcw } from 'lucide-react';
+import { Search, Calendar, Clock, CheckCircle2, XCircle, Filter, RotateCcw, Printer } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Pagination } from '@/types';
 import { useState } from 'react';
@@ -47,6 +47,14 @@ export default function MyAttendance({ attendances, filters, employee }: Props) 
         setTanggalStart('');
         setTanggalEnd('');
         router.get('/my-attendance');
+    }
+
+    function handleDownloadPdf() {
+        const params = new URLSearchParams();
+        if (tanggalStart) params.append('tanggal_start', tanggalStart);
+        if (tanggalEnd) params.append('tanggal_end', tanggalEnd);
+        
+        window.location.href = `/my-attendance/pdf?${params.toString()}`;
     }
 
     // Helper to format minutes to "HH:mm"
@@ -133,6 +141,14 @@ export default function MyAttendance({ attendances, filters, employee }: Props) 
                                     <span>Reset</span>
                                 </button>
                             )}
+                            <button
+                                type="button"
+                                onClick={handleDownloadPdf}
+                                className="inline-flex h-[38px] items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            >
+                                <Printer className="size-4" />
+                                <span>Download PDF</span>
+                            </button>
                         </div>
                     </form>
                 </div>

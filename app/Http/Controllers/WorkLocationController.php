@@ -47,11 +47,16 @@ class WorkLocationController extends Controller
             'code' => 'required|string|max:10|unique:work_locations,code',
             'address' => 'nullable|string',
             'logo' => 'nullable|image|max:2048',
+            'header_image' => 'nullable|image|max:2048',
             'payroll_cutoff_date' => 'nullable|integer|min:1|max:31',
         ]);
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('company_logos', 'public');
+        }
+
+        if ($request->hasFile('header_image')) {
+            $validated['header_image'] = $request->file('header_image')->store('company_headers', 'public');
         }
 
         WorkLocation::create($validated);
@@ -80,6 +85,7 @@ class WorkLocationController extends Controller
             'code' => 'required|string|max:10|unique:work_locations,code,' . $workLocation->id,
             'address' => 'nullable|string',
             'logo' => 'nullable|image|max:2048',
+            'header_image' => 'nullable|image|max:2048',
             'payroll_cutoff_date' => 'nullable|integer|min:1|max:31',
         ]);
 
@@ -88,6 +94,13 @@ class WorkLocationController extends Controller
                 Storage::disk('public')->delete($workLocation->logo);
             }
             $validated['logo'] = $request->file('logo')->store('company_logos', 'public');
+        }
+
+        if ($request->hasFile('header_image')) {
+            if ($workLocation->header_image) {
+                Storage::disk('public')->delete($workLocation->header_image);
+            }
+            $validated['header_image'] = $request->file('header_image')->store('company_headers', 'public');
         }
 
         $workLocation->update($validated);
@@ -107,6 +120,10 @@ class WorkLocationController extends Controller
 
         if ($workLocation->logo) {
             Storage::disk('public')->delete($workLocation->logo);
+        }
+
+        if ($workLocation->header_image) {
+            Storage::disk('public')->delete($workLocation->header_image);
         }
 
         $workLocation->delete();

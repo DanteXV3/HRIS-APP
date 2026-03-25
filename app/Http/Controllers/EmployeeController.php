@@ -87,6 +87,16 @@ class EmployeeController extends Controller
             // Handle file uploads
             $validated = $this->handleFileUploads($request, $validated);
 
+            // Handle signature if provided
+            if ($request->filled('signature') && str_starts_with($request->signature, 'data:image')) {
+                $base64 = $request->signature;
+                $image = str_replace('data:image/png;base64,', '', $base64);
+                $image = str_replace(' ', '+', $image);
+                $imageName = 'signature_new_' . time() . '.png';
+                Storage::disk('public')->put('signatures/' . $imageName, base64_decode($image));
+                $validated['signature'] = 'signatures/' . $imageName;
+            }
+
             // Auto-generate NIK: EMP-(company code)-(seq)-(YYDDMM)
             $validated['nik'] = $this->generateNik($validated['work_location_id'], $validated['hire_date']);
 
@@ -160,6 +170,19 @@ class EmployeeController extends Controller
         DB::transaction(function () use ($validated, $request, $employee) {
             $validated = $this->handleFileUploads($request, $validated);
 
+            // Handle signature if provided
+            if ($request->filled('signature') && str_starts_with($request->signature, 'data:image')) {
+                $base64 = $request->signature;
+                $image = str_replace('data:image/png;base64,', '', $base64);
+                $image = str_replace(' ', '+', $image);
+                $imageName = 'signature_' . ($employee->id ?? 'new') . '_' . time() . '.png';
+                Storage::disk('public')->put('signatures/' . $imageName, base64_decode($image));
+                if ($employee && $employee->signature) {
+                    Storage::disk('public')->delete($employee->signature);
+                }
+                $validated['signature'] = 'signatures/' . $imageName;
+            }
+
             // Update user role if position changed
             $position = Position::find($validated['position_id']);
             $department = Department::find($validated['department_id']);
@@ -213,7 +236,12 @@ class EmployeeController extends Controller
     {
         $employee = Employee::with(['department', 'position', 'workLocation', 'user', 'shift'])
             ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+            ->first();
+
+        if (!$employee) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Profil karyawan belum terdaftar. Hubungi administrator.');
+        }
 
         return Inertia::render('profile/edit', [
             'employee' => $employee,
@@ -261,10 +289,31 @@ class EmployeeController extends Controller
             'file_kk' => 'nullable|file|max:5120',
             'file_ijazah' => 'nullable|file|max:5120',
             'file_lainnya.*' => 'nullable|file|max:5120',
+            'signature' => 'nullable|string', // Support saving along with main form
         ]);
 
         DB::transaction(function () use ($validated, $request, $employee) {
             $validated = $this->handleFileUploads($request, $validated);
+
+            // Handle signature if provided as base64
+            if (!empty($validated['signature']) && str_starts_with($validated['signature'], 'data:image')) {
+                $base64 = $validated['signature'];
+                $image = str_replace(['data:image/png;base64,', 'data:image/jpeg;base64,', ' '], ['', '', '+'], $base64);
+                $imageName = 'signature_' . $employee->id . '_' . time() . '.png';
+                
+                if (!Storage::disk('public')->exists('signatures')) {
+                    Storage::disk('public')->makeDirectory('signatures');
+                }
+                
+                Storage::disk('public')->put('signatures/' . $imageName, base64_decode($image));
+                
+                if ($employee->signature) {
+                    Storage::disk('public')->delete($employee->signature);
+                }
+                $validated['signature'] = 'signatures/' . $imageName;
+            } else {
+                unset($validated['signature']);
+            }
 
             if ($employee->user) {
                 $userData = [
@@ -353,6 +402,7 @@ class EmployeeController extends Controller
             'file_kk' => 'nullable|file|max:5120',
             'file_ijazah' => 'nullable|file|max:5120',
             'file_lainnya.*' => 'nullable|file|max:5120',
+            'signature' => 'nullable|string',
         ]);
     }
 
@@ -405,5 +455,39 @@ class EmployeeController extends Controller
         $dateFormatted = $date->format('y') . $date->format('d') . $date->format('m');
 
         return "EMP-{$companyCode}-{$seqFormatted}-{$dateFormatted}";
+    }
+    public function updateSignature(Request $request, ?Employee $employee = null)
+    {
+        if (!$employee || !$employee->exists) {
+            $employee = Employee::where('user_id', $request->user()->id)->firstOrFail();
+        } else {
+            // Check if admin/hr
+            if (!$request->user()->isAdmin() && !$request->user()->hasPermission('employee.edit')) {
+                abort(403);
+            }
+        }
+
+        $request->validate([
+            'signature' => 'required|string', // base64
+        ]);
+
+        $base64 = $request->signature;
+        $image = str_replace(['data:image/png;base64,', 'data:image/jpeg;base64,', ' '], ['', '', '+'], $base64);
+        $imageName = 'signature_' . $employee->id . '_' . time() . '.png';
+        
+        if (!Storage::disk('public')->exists('signatures')) {
+            Storage::disk('public')->makeDirectory('signatures');
+        }
+
+        Storage::disk('public')->put('signatures/' . $imageName, base64_decode($image));
+        
+        // Delete old signature if exists
+        if ($employee->signature) {
+            Storage::disk('public')->delete($employee->signature);
+        }
+
+        $employee->update(['signature' => 'signatures/' . $imageName]);
+
+        return redirect()->back()->with('success', 'Tanda tangan berhasil diperbarui.');
     }
 }

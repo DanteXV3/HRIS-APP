@@ -185,7 +185,27 @@ class LeaveRequestController extends Controller
         // Calculate jumlah_hari
         $start = \Carbon\Carbon::parse($validated['tanggal_mulai']);
         $end = \Carbon\Carbon::parse($validated['tanggal_selesai']);
-        $jumlahHari = $start->diffInDays($end) + 1;
+        $calculatedJumlahHari = $start->diffInDays($end) + 1;
+        
+        $jumlahHari = $request->input('jumlah_hari', $calculatedJumlahHari);
+
+        // Validation: Check max_days for the leave type
+        $leaveType = LeaveType::find($validated['leave_type_id']);
+        if ($leaveType->name === 'Cuti Tahunan') {
+            $balance = LeaveBalance::where('employee_id', $employee->id)
+                ->where('leave_type_id', $leaveType->id)
+                ->where('year', now()->year)
+                ->first();
+            
+            $remaining = $balance ? $balance->remaining_days : 0;
+            if ($jumlahHari > $remaining) {
+                return back()->withErrors(['jumlah_hari' => "Sisa cuti tahunan Anda tidak mencukupi (Sisa: {$remaining} hari)."]);
+            }
+        } elseif ($leaveType->max_days > 0) {
+            if ($jumlahHari > $leaveType->max_days) {
+                return back()->withErrors(['jumlah_hari' => "Maksimal pengambilan cuti {$leaveType->name} adalah {$leaveType->max_days} hari."]);
+            }
+        }
 
         LeaveRequest::create([
             'employee_id' => $employee->id,
@@ -290,10 +310,23 @@ class LeaveRequestController extends Controller
         if ($leave->status === 'approved') {
             $leaveType = $leave->leaveType;
             if ($leaveType->name === 'Cuti Tahunan') {
-                $balance = LeaveBalance::firstOrCreate(
-                    ['employee_id' => $leave->employee_id, 'leave_type_id' => $leaveType->id, 'year' => now()->year],
-                    ['total_days' => $leaveType->max_days, 'used_days' => 0]
-                );
+                $service = app(\App\Services\LeaveBalanceService::class);
+                $balance = LeaveBalance::where('employee_id', $leave->employee_id)
+                    ->where('leave_type_id', $leaveType->id)
+                    ->where('year', now()->year)
+                    ->first();
+
+                if (!$balance) {
+                    $entitlement = $service->calculateAnnualLeaveEntitlement($leave->employee, now()->year);
+                    $balance = LeaveBalance::create([
+                        'employee_id' => $leave->employee_id,
+                        'leave_type_id' => $leaveType->id,
+                        'year' => now()->year,
+                        'total_days' => $entitlement,
+                        'used_days' => 0,
+                    ]);
+                }
+                
                 $balance->increment('used_days', $leave->jumlah_hari);
             }
         }
@@ -401,10 +434,28 @@ class LeaveRequestController extends Controller
 
         $leaveType = $leave->leaveType->name ?? 'Cuti';
         $deptName = $submitter->department->name ?? '-';
-        $message = "Pengajuan {$leaveType} dari {$submitter->nama} ({$deptName}) menunggu persetujuan Anda.\nPeriode: {$leave->tanggal_mulai->format('d/m/Y')} - {$leave->tanggal_selesai->format('d/m/Y')} ({$leave->jumlah_hari} hari)\nKeperluan: {$leave->alasan}\n\nSilahkan cek di dashboard HRIS.";
+        $startDate = $leave->tanggal_mulai->format('d/m/Y');
+        $endDate = $leave->tanggal_selesai->format('d/m/Y');
+        $status = ucfirst($leave->status);
+        $comment = $leave->status === 'partially_approved' ? ($leave->supervisor_notes ?: '-') : '-';
+        $approverName = $approver->nama;
+
+        $message = "Dear Mr/Mrs {$approverName}\n\n" .
+                  "Silahkan diproses {$leaveType} untuk :\n\n" .
+                  "Nama = {$submitter->nama}\n" .
+                  "Department = {$deptName}\n" .
+                  "Jenis Izin = {$leaveType}\n" .
+                  "Dari Tanggal = {$startDate}\n" .
+                  "Hingga Tanggal = {$endDate}\n" .
+                  "Durasi = {$leave->jumlah_hari} hari\n" .
+                  "Alasan = {$leave->alasan}\n" .
+                  "Status = {$status}\n" .
+                  "Comment = {$comment}\n\n" .
+                  "Silahkan klik link dibawah ini untuk membuka aplikasi anda.\n\n" .
+                  "https://hris.bangunbejanabaja.com/leaves/{$leave->id}";
 
         $url = 'https://wa.me/' . $phone . '?text=' . urlencode($message);
 
-        return response()->json(['url' => $url, 'approver_name' => $approver->nama]);
+        return response()->json(['url' => $url, 'approver_name' => $approverName]);
     }
 }

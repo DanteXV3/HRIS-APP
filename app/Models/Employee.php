@@ -16,6 +16,7 @@ class Employee extends Model
         'user_id',
         'report_to',
         'dashboard_config',
+        'signature',
         // Data Pribadi
         'nama',
         'nik',

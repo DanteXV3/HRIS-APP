@@ -1,6 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Clock, Eye, FileText, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Plus, Clock, Eye, FileText, CheckCircle2, XCircle, AlertCircle, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
+import axios from 'axios';
 import type { BreadcrumbItem, Overtime, Pagination } from '@/types';
 
 interface Props {
@@ -17,6 +19,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function OvertimeIndex() {
     const { overtimes, filters, userRole, currentEmployeeId } = usePage<any>().props as unknown as Props;
+    const [sendingWa, setSendingWa] = useState<number | null>(null);
+
+    const handleWhatsApp = async (id: number) => {
+        setSendingWa(id);
+        try {
+            const res = await axios.get(`/overtimes/${id}/whatsapp-url`);
+            window.open(res.data.url, '_blank');
+        } catch (error: any) {
+            alert(error.response?.data?.error || 'Gagal membuat link WhatsApp.');
+        } finally {
+            setSendingWa(null);
+        }
+    };
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -109,14 +124,27 @@ export default function OvertimeIndex() {
                                         <td className="whitespace-nowrap px-4 py-4">
                                             {getStatusBadge(overtime.status)}
                                         </td>
-                                        <td className="whitespace-nowrap px-4 py-4 text-right">
-                                            <Link
-                                                href={`/overtimes/${overtime.id}`}
-                                                className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                                            >
-                                                <Eye className="w-4 h-4" /> Detail
-                                            </Link>
-                                        </td>
+                                         <td className="whitespace-nowrap px-4 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Link
+                                                    href={`/overtimes/${overtime.id}`}
+                                                    className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                                                    title="Detail"
+                                                >
+                                                    <Eye className="w-4 h-4" /> Detail
+                                                </Link>
+                                                {(overtime.status === 'pending' || overtime.status === 'partially_approved') && (
+                                                    <button
+                                                        onClick={() => handleWhatsApp(overtime.id)}
+                                                        disabled={sendingWa === overtime.id}
+                                                        className="rounded-lg p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
+                                                        title="Kirim WhatsApp ke Atasan"
+                                                    >
+                                                        <MessageCircle className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                         </td>
                                     </tr>
                                 ))
                             ) : (

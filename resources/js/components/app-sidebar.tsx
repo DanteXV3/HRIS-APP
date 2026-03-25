@@ -32,8 +32,9 @@ export function AppSidebar() {
 
     const canCreateOvertime = isAdmin || user?.can?.includes('overtime.create');
     const canApproveOvertime = isAdmin || user?.can?.includes('overtime.first_approval') || user?.can?.includes('overtime.second_approval') || user?.can?.includes('overtime.view_all');
+    const canApprovePR = isAdmin || user?.can?.some((c: string) => c.startsWith('pr.approve.'));
 
-    // 1. Tentang Saya (Always visible, items might depend on role/permissions)
+    // 1. Menu Saya (Always visible, items might depend on role/permissions)
     const tentangSayaItems: NavItem[] = [
         { title: 'Profil Saya', href: '/profile', icon: Users },
         { title: 'Absensi Saya', href: '/my-attendance', icon: CalendarClock },
@@ -41,6 +42,10 @@ export function AppSidebar() {
         { title: 'Pengajuan Cuti', href: '/leaves', icon: FileText },
         { title: 'Form Keluar', href: '/exit-permits', icon: DoorOpen },
     ];
+
+    if (isAdmin || user?.can?.includes('pr.create')) {
+        tentangSayaItems.push({ title: 'Payment Request', href: '/payment-requests', icon: Receipt });
+    }
 
     if (canCreateOvertime || canApproveOvertime) {
         tentangSayaItems.push({ title: 'Form Lembur', href: '/overtimes', icon: CalendarClock });
@@ -51,7 +56,7 @@ export function AppSidebar() {
     if (canViewEmployees) managementItems.push({ title: 'Data Karyawan', href: '/employees', icon: Users });
     if (canViewAttendance) managementItems.push({ title: 'Data Absensi', href: '/attendances', icon: CalendarClock });
     if (canViewPayroll) managementItems.push({ title: 'Payroll & Slip Gaji', href: '/payrolls', icon: Receipt });
-    
+
     // Add Administrative views for Leave, Exit Permits, and Overtime
     const canApproveLeave = isAdmin || auth.user.can?.includes('leave.first_approval') || auth.user.can?.includes('leave.second_approval');
     const canViewOthersExit = isAdmin || auth.user.can?.includes('exit_permit.view_others');
@@ -64,6 +69,9 @@ export function AppSidebar() {
     }
     if (canApproveOvertime) {
         managementItems.push({ title: 'Data Pengajuan Lembur', href: '/overtimes', icon: CalendarClock });
+    }
+    if (canApprovePR) {
+        managementItems.push({ title: 'Data Payment Request', href: '/payment-requests', icon: Receipt });
     }
 
     // 3. Setting
@@ -81,7 +89,7 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
         {
-            title: 'Tentang Saya',
+            title: 'Menu Saya',
             href: '#',
             icon: Users,
             items: tentangSayaItems,

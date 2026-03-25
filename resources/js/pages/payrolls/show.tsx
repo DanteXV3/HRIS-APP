@@ -10,6 +10,16 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, UserCheck, ShieldCheck, Percent, Receipt } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PayrollItem {
     id: number;
@@ -198,25 +208,54 @@ export default function PayrollShow({ payroll }: Props) {
                         >
                             <FileSpreadsheet className="size-4 text-green-600" /> Export Excel
                         </a>
-                        <a
-                            href={`/payrolls/${payroll.id}/export-pdf-report`}
-                            target="_blank"
-                            className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:focus:ring-offset-neutral-900"
-                        >
-                            <Printer className="size-4 text-red-500" /> Cetak PDF
-                        </a>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="gap-2">
+                                    <Printer className="size-4 text-red-500" /> Cetak PDF <ChevronDown className="size-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
+                                <DropdownMenuLabel>Pilih Jenis Laporan</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <a href={`/payrolls/${payroll.id}/export-pdf-report`} target="_blank" className="flex items-center gap-2 cursor-pointer">
+                                        <FileText className="size-4 text-blue-500" /> Summary THP (all)
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href={`/payrolls/${payroll.id}/export-uang-makan-lembur`} target="_blank" className="flex items-center gap-2 cursor-pointer">
+                                        <Receipt className="size-4 text-orange-500" /> Summary Makan & Lembur
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href={`/payrolls/${payroll.id}/export-bpjs`} target="_blank" className="flex items-center gap-2 cursor-pointer">
+                                        <ShieldCheck className="size-4 text-green-500" /> Summary BPJS
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href={`/payrolls/${payroll.id}/export-pph21`} target="_blank" className="flex items-center gap-2 cursor-pointer">
+                                        <Percent className="size-4 text-purple-500" /> Summary PPh21
+                                    </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href={`/payrolls/${payroll.id}/export-attendance`} target="_blank" className="flex items-center gap-2 cursor-pointer">
+                                        <UserCheck className="size-4 text-cyan-500" /> Report Absensi
+                                    </a>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
                         {payroll.status !== 'finalized' && (
-                            <button
+                            <Button
                                 onClick={() => {
                                     if (confirm('Yakin ingin memfinalisasi payroll ini? Setelah finalisasi, semua rincian gaji karyawan pada periode ini akan dikunci permanen.')) {
                                         router.post(`/payrolls/${payroll.id}/finalize`);
                                     }
                                 }}
-                                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-900"
+                                className="bg-green-600 hover:bg-green-700 text-white"
                             >
-                                <CheckCircle className="size-4" /> Finalisasi Payroll
-                            </button>
+                                <CheckCircle className="size-4 mr-2" /> Finalisasi Payroll
+                            </Button>
                         )}
                     </div>
                 </div>
