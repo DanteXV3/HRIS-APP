@@ -15,6 +15,11 @@ class Position extends Model
         'name',
         'department_id',
         'grade',
+        'kpi_1',
+        'kpi_2',
+        'kpi_3',
+        'kpi_4',
+        'kpi_5',
     ];
 
     public function department(): BelongsTo

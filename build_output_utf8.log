@@ -1,0 +1,33 @@
+﻿node.exe : npm warn Unknown project config "public-hoist-pattern". This will stop working in the next major version of 
+npm.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...version of npm.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+> build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+[32mΓ£ô[39m 57 modules transformed.
+[31mΓ£ù[39m Build failed in 5.17s
+[31merror during build:
+[31m[vite]: Rollup failed to resolve import "date-fns" from "C:/xampp/htdocs/hris/resources/js/pages/kpis/form.tsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`[31m
+    at viteLog (file:///C:/xampp/htdocs/hris/node_modules/vite/dist/node/chunks/config.js:33635:57)
+    at file:///C:/xampp/htdocs/hris/node_modules/vite/dist/node/chunks/config.js:33669:73
+    at onwarn (file:///C:/xampp/htdocs/hris/node_modules/@vitejs/plugin-react/dist/index.js:76:7)
+    at file:///C:/xampp/htdocs/hris/node_modules/vite/dist/node/chunks/config.js:33669:28
+    at onRollupLog (file:///C:/xampp/htdocs/hris/node_modules/vite/dist/node/chunks/config.js:33664:63)
+    at onLog (file:///C:/xampp/htdocs/hris/node_modules/vite/dist/node/chunks/config.js:33467:4)
+    at file:///C:/xampp/htdocs/hris/node_modules/rollup/dist/es/shared/node-entry.js:20981:32
+    at Object.logger [as onLog] (file:///C:/xampp/htdocs/hris/node_modules/rollup/dist/es/shared/node-entry.js:22968:9)
+    at ModuleLoader.handleInvalidResolvedId 
+(file:///C:/xampp/htdocs/hris/node_modules/rollup/dist/es/shared/node-entry.js:21712:26)
+    at file:///C:/xampp/htdocs/hris/node_modules/rollup/dist/es/shared/node-entry.js:21670:26[39m

@@ -1,5 +1,5 @@
-import { Head, router } from '@inertiajs/react';
-import { Search, Calendar, Clock, CheckCircle2, XCircle, Filter, RotateCcw, Printer } from 'lucide-react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Search, Calendar, Clock, CheckCircle2, XCircle, Filter, RotateCcw, Printer, Edit3, AlertCircle } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem, Pagination } from '@/types';
 import { useState } from 'react';
@@ -24,11 +24,22 @@ interface Props {
     attendances: Pagination<Attendance>;
     filters: { tanggal_start?: string, tanggal_end?: string };
     employee: any;
+    pendingCorrections: Record<string, any>;
 }
 
-export default function MyAttendance({ attendances, filters, employee }: Props) {
+export default function MyAttendance({ attendances, filters, employee, pendingCorrections }: Props) {
     const [tanggalStart, setTanggalStart] = useState(filters.tanggal_start || '');
     const [tanggalEnd, setTanggalEnd] = useState(filters.tanggal_end || '');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const { data, setData, post, processing, errors, reset } = useForm({
+        tanggal: '',
+        clock_in: '',
+        clock_out: '',
+        status: 'hadir',
+        reason: '',
+        attendance_id: null as number | null,
+    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -63,6 +74,28 @@ export default function MyAttendance({ attendances, filters, employee }: Props) 
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
         return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    }
+
+    function openCorrectionModal(att: Attendance) {
+        setData({
+            tanggal: att.tanggal,
+            clock_in: att.clock_in ? att.clock_in.substring(11, 16) : '',
+            clock_out: att.clock_out ? att.clock_out.substring(11, 16) : '',
+            status: att.status === 'attendance' ? 'hadir' : att.status, // standardizing status
+            reason: '',
+            attendance_id: att.id > 0 ? att.id : null, // real IDs are > 0, virtual might be 0 or null
+        });
+        setIsModalOpen(true);
+    }
+
+    function submitCorrection(e: React.FormEvent) {
+        e.preventDefault();
+        post('/attendance-corrections', {
+            onSuccess: () => {
+                setIsModalOpen(false);
+                reset();
+            },
+        });
     }
 
     return (
@@ -166,6 +199,7 @@ export default function MyAttendance({ attendances, filters, employee }: Props) 
                                     <th className="px-4 py-3 text-center">Pulang Awal</th>
                                     <th className="px-4 py-3 text-center">Lembur</th>
                                     <th className="px-4 py-3 text-left">Catatan</th>
+                                    <th className="px-4 py-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-200 bg-white dark:divide-neutral-800 dark:bg-neutral-900">
@@ -212,6 +246,22 @@ export default function MyAttendance({ attendances, filters, employee }: Props) 
                                             <td className="px-4 py-4 text-sm text-neutral-500 dark:text-neutral-400 truncate max-w-[150px]">
                                                 {att.notes || '-'}
                                             </td>
+                                            <td className="px-4 py-4 text-center">
+                                                {pendingCorrections[att.tanggal] ? (
+                                                    <span className="inline-flex items-center gap-1 rounded-md bg-yellow-100 px-2 py-1 text-[10px] font-bold text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                        <AlertCircle className="size-3" />
+                                                        Pending
+                                                    </span>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => openCorrectionModal(att)}
+                                                        className="inline-flex items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                                    >
+                                                        <Edit3 className="size-3" />
+                                                        <span>Koreksi</span>
+                                                    </button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
@@ -253,6 +303,100 @@ export default function MyAttendance({ attendances, filters, employee }: Props) 
                     </div>
                 )}
             </div>
+
+            {/* Correction Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Minta Koreksi Absensi</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">
+                                <XCircle className="size-6" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={submitCorrection} className="flex flex-col gap-4">
+                            <div>
+                                <label className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Tanggal</label>
+                                <input 
+                                    type="text" 
+                                    disabled 
+                                    className="block w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-white"
+                                    value={new Date(data.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Jam Masuk</label>
+                                    <input 
+                                        type="time" 
+                                        className="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                                        value={data.clock_in}
+                                        onChange={e => setData('clock_in', e.target.value)}
+                                    />
+                                    {errors.clock_in && <p className="mt-1 text-xs text-red-500">{errors.clock_in}</p>}
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Jam Pulang</label>
+                                    <input 
+                                        type="time" 
+                                        className="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                                        value={data.clock_out}
+                                        onChange={e => setData('clock_out', e.target.value)}
+                                    />
+                                    {errors.clock_out && <p className="mt-1 text-xs text-red-500">{errors.clock_out}</p>}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Status Seharusnya</label>
+                                <select 
+                                    className="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                                    value={data.status}
+                                    onChange={e => setData('status', e.target.value)}
+                                >
+                                    <option value="hadir">Hadir</option>
+                                    <option value="izin">Izin</option>
+                                    <option value="sakit">Sakit</option>
+                                    <option value="cuti">Cuti</option>
+                                    <option value="libur">Libur</option>
+                                    <option value="alpha">Alpha</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Alasan Koreksi</label>
+                                <textarea 
+                                    rows={3}
+                                    placeholder="Contoh: Lupa scan karena buru-buru rapat, mesin error, dsb."
+                                    className="block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                                    value={data.reason}
+                                    onChange={e => setData('reason', e.target.value)}
+                                />
+                                {errors.reason && <p className="mt-1 text-xs text-red-500">{errors.reason}</p>}
+                            </div>
+
+                            <div className="mt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="flex-1 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                                >
+                                    {processing ? 'Mengirim...' : 'Kirim Permintaan'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

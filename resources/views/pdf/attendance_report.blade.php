@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <title>Laporan Absensi Karyawan</title>
     <style>
-        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; }
-        .page-header { text-align: center; margin-bottom: 20px; }
-        h1 { font-size: 18px; margin-bottom: 5px; text-transform: uppercase; }
-        h2 { font-size: 14px; margin-top: 0; font-weight: normal; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; margin: 25px 35px; }
+        .page-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; }
+        h1 { font-size: 18px; margin-bottom: 5px; text-transform: uppercase; color: #1e3a8a; }
+        h2 { font-size: 14px; margin-top: 0; font-weight: normal; color: #64748b; }
         
         .page-break { page-break-after: always; }
         
@@ -29,6 +29,8 @@
         
         .status-hadir { color: #059669; font-weight: bold; }
         .status-absent { color: #dc2626; font-weight: bold; }
+        .status-holiday { color: #7c3aed; font-weight: bold; }
+        .status-off { color: #64748b; font-weight: italic; }
         .is-late { color: #b91c1c; }
     </style>
 </head>
@@ -119,7 +121,7 @@
                             <td>
                                 {{ $att->early_out_minutes > 0 ? floor($att->early_out_minutes / 60) . 'h ' . ($att->early_out_minutes % 60) . 'm' : '-' }}
                             </td>
-                            <td class="{{ $att->status === 'hadir' ? 'status-hadir' : ($att->status === 'alpha' ? 'status-absent' : '') }}">
+                            <td class="{{ $att->status === 'hadir' ? 'status-hadir' : ($att->status === 'alpha' ? 'status-absent' : ($att->status === 'libur' ? 'status-holiday' : ($att->status === 'off' ? 'status-off' : ''))) }}">
                                 {{ strtoupper($att->status) }}
                             </td>
                             <td style="font-weight: bold;">

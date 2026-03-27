@@ -1,4 +1,11 @@
 // === HRIS TypeScript Types ===
+export interface Holiday {
+    id: number;
+    date: string;
+    name: string;
+    created_at: string;
+    updated_at: string;
+}
 
 export interface Department {
     id: number;
@@ -39,6 +46,11 @@ export interface Position {
     grade: 'staff' | 'supervisor' | 'manager';
     department?: Department;
     employees_count?: number;
+    kpi_1?: string;
+    kpi_2?: string;
+    kpi_3?: string;
+    kpi_4?: string;
+    kpi_5?: string;
     created_at: string;
     updated_at: string;
 }

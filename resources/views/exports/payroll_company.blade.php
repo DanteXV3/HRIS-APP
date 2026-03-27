@@ -42,13 +42,14 @@
         $potLain = $item->pinjaman_koperasi + $item->potongan_lain_1 + $item->potongan_lain_2;
 
         $row = [
-            'nik' => $item->employee->nik,
-            'nama' => $item->employee->nama,
-            'dept' => $item->employee->department?->name ?? '-',
-            'pos' => $item->employee->position?->name ?? '-',
-            'bank' => $item->employee->nama_bank ?? '-',
-            'no_rek' => $item->employee->no_rekening ?? '-',
-            'nama_rek' => $item->employee->nama_rekening ?? '-',
+            'nik' => $item->employee_nik ?? $item->employee->nik,
+            'nama' => $item->employee_name ?? $item->employee->nama,
+            'dept' => $item->department_name ?? ($item->employee->department?->name ?? '-'),
+            'pos' => $item->position_name ?? ($item->employee->position?->name ?? '-'),
+            'site' => $item->working_location_name ?? ($item->employee->workingLocation?->name ?? '-'),
+            'bank' => $item->bank_name ?? ($item->employee->nama_bank ?? '-'),
+            'no_rek' => $item->bank_account_no ?? ($item->employee->no_rekening ?? '-'),
+            'nama_rek' => $item->employee_name ?? ($item->employee->nama_rekening ?? '-'),
             'gaji_pokok' => $item->gaji_pokok,
             'tunjangan_jabatan' => $item->tunjangan_jabatan,
             'tunjangan_kehadiran' => $item->tunjangan_kehadiran,
@@ -102,10 +103,10 @@
     <!-- Title Section -->
     <thead>
         <tr>
-            <td colspan="28"><strong>Laporan Payroll - {{ $companyName }}</strong></td>
+            <td colspan="29"><strong>Laporan Payroll - {{ $companyName }}</strong></td>
         </tr>
         <tr>
-            <td colspan="28">Periode: {{ \Carbon\Carbon::parse($payroll->periode . '-01')->translatedFormat('F Y') }}</td>
+            <td colspan="29">Periode: {{ \Carbon\Carbon::parse($payroll->periode . '-01')->translatedFormat('F Y') }}</td>
         </tr>
         <tr></tr> <!-- Empty row for spacing -->
 
@@ -116,6 +117,7 @@
             <th style="background-color: #cbd5e1; font-weight: bold;">Nama Karyawan</th>
             <th style="background-color: #cbd5e1; font-weight: bold;">Departemen</th>
             <th style="background-color: #cbd5e1; font-weight: bold;">Jabatan</th>
+            <th style="background-color: #cbd5e1; font-weight: bold;">Lokasi Kerja</th>
             <th style="background-color: #cbd5e1; font-weight: bold;">Bank</th>
             <th style="background-color: #cbd5e1; font-weight: bold;">No Rekening</th>
             <th style="background-color: #cbd5e1; font-weight: bold;">Nama Rekening</th>
@@ -160,6 +162,7 @@
             <td>{{ $row['nama'] }}</td>
             <td>{{ $row['dept'] }}</td>
             <td>{{ $row['pos'] }}</td>
+            <td>{{ $row['site'] }}</td>
             <td>{{ $row['bank'] }}</td>
             <td>{{ $row['no_rek'] }}</td>
             <td>{{ $row['nama_rek'] }}</td>
@@ -199,7 +202,7 @@
     <!-- Totals Row -->
     <tfoot>
         <tr>
-            <td colspan="7" style="text-align: right; font-weight: bold;">TOTAL KESELURUHAN:</td>
+            <td colspan="8" style="text-align: right; font-weight: bold;">TOTAL KESELURUHAN:</td>
             <td style="font-weight: bold;">{{ $sumTotals['gaji_pokok'] }}</td>
             <td style="font-weight: bold;">{{ $sumTotals['tunjangan_jabatan'] }}</td>
             <td style="font-weight: bold;">{{ $sumTotals['tunjangan_kehadiran'] }}</td>

@@ -41,10 +41,16 @@ class AttendanceController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $pendingCorrections = \App\Models\AttendanceCorrection::where('employee_id', $employee->id)
+            ->where('approval_status', 'pending')
+            ->get()
+            ->keyBy('tanggal');
+
         return Inertia::render('attendances/me', [
             'attendances' => $attendances,
             'filters' => $request->only(['tanggal_start', 'tanggal_end']),
             'employee' => $employee->load('shift'),
+            'pendingCorrections' => $pendingCorrections,
         ]);
     }
 
@@ -69,27 +75,109 @@ class AttendanceController extends Controller
                 $query->where('tanggal', '<=', $tanggalEnd);
             })
             ->orderBy('tanggal', 'asc')
-            ->get();
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $dateStr = $item->tanggal instanceof Carbon ? $item->tanggal->format('Y-m-d') : Carbon::parse($item->tanggal)->format('Y-m-d');
+                return [$dateStr => $item];
+            });
 
-        // Prepare data with summary (single employee)
-        $data = [[
-            'employee' => $employee,
-            'attendances' => $attendances,
-            'summary' => [
-                'hadir' => $attendances->where('status', 'hadir')->count(),
-                'sakit' => $attendances->where('status', 'sakit')->count(),
-                'izin' => $attendances->where('status', 'izin')->count(),
-                'cuti' => $attendances->where('status', 'cuti')->count(),
-                'alpha' => $attendances->where('status', 'alpha')->count(),
-                'libur' => $attendances->where('status', 'libur')->count(),
-                'late' => $attendances->where('is_late', true)->count(),
-                'overtime_mins' => $attendances->sum('verified_lembur_minutes'),
-                'total_days' => $attendances->count(),
-            ]
-        ]];
+        $holidays = \App\Models\Holiday::whereBetween('date', [$tanggalStart, $tanggalEnd])->pluck('name', 'date');
+        
+        $leaves = \App\Models\LeaveRequest::with('leaveType')
+            ->where('employee_id', $employee->id)
+            ->where('status', 'approved')
+            ->where(function ($q) use ($tanggalStart, $tanggalEnd) {
+                $q->where(function ($q) use ($tanggalStart, $tanggalEnd) {
+                    $q->where('tanggal_mulai', '<=', $tanggalStart)
+                      ->where('tanggal_selesai', '>=', $tanggalStart);
+                })->orWhere(function ($q) use ($tanggalStart, $tanggalEnd) {
+                    $q->where('tanggal_mulai', '<=', $tanggalEnd)
+                      ->where('tanggal_selesai', '>=', $tanggalEnd);
+                })->orWhere(function ($q) use ($tanggalStart, $tanggalEnd) {
+                    $q->where('tanggal_mulai', '>=', $tanggalStart)
+                      ->where('tanggal_selesai', '<=', $tanggalEnd);
+                });
+            })
+            ->get();
+        
+        $dateRange = [];
+        $currentDate = Carbon::parse($tanggalStart);
+        $endDate = Carbon::parse($tanggalEnd);
+        while ($currentDate <= $endDate) {
+            $dateRange[] = $currentDate->format('Y-m-d');
+            $currentDate->addDay();
+        }
+
+        $filledAttendances = [];
+        foreach ($dateRange as $date) {
+            if ($attendances->has($date)) {
+                $filledAttendances[] = $attendances->get($date);
+            } else {
+                $carbonDate = Carbon::parse($date);
+                $status = 'alpha';
+                $isHoliday = false;
+                $notes = '';
+
+                if ($holidays->has($date)) {
+                    $status = 'libur';
+                    $isHoliday = true;
+                    $notes = $holidays->get($date);
+                } else {
+                    $leaveOnDate = $leaves->first(function ($l) use ($date) {
+                        return $date >= $l->tanggal_mulai->format('Y-m-d') && $date <= $l->tanggal_selesai->format('Y-m-d');
+                    });
+
+                    if ($leaveOnDate) {
+                        $typeName = strtolower($leaveOnDate->leaveType->name);
+                        if (str_contains($typeName, 'sakit')) $status = 'sakit';
+                        elseif (str_contains($typeName, 'izin')) $status = 'izin';
+                        else $status = 'cuti';
+                        $notes = $leaveOnDate->alasan;
+                    } elseif ($carbonDate->isWeekend()) {
+                        $status = 'off';
+                    }
+                }
+
+                $att = new Attendance([
+                    'tanggal' => $date,
+                    'status' => $status,
+                    'clock_in' => null,
+                    'clock_out' => null,
+                    'early_in_minutes' => 0,
+                    'late_in_minutes' => 0,
+                    'early_out_minutes' => 0,
+                    'late_out_minutes' => 0,
+                    'is_late' => false,
+                    'is_holiday' => $isHoliday,
+                    'notes' => $notes,
+                    'verified_lembur_minutes' => 0
+                ]);
+                $att->setRelation('employee', $employee);
+                $filledAttendances[] = $att;
+            }
+        }
+
+        $filledAttendances = collect($filledAttendances);
+
+        $summary = [
+            'hadir' => $filledAttendances->where('status', 'hadir')->count(),
+            'sakit' => $filledAttendances->where('status', 'sakit')->count(),
+            'izin' => $filledAttendances->where('status', 'izin')->count(),
+            'cuti' => $filledAttendances->where('status', 'cuti')->count(),
+            'alpha' => $filledAttendances->where('status', 'alpha')->count(),
+            'libur' => $filledAttendances->where('status', 'libur')->count(),
+            'off' => $filledAttendances->where('status', 'off')->count(),
+            'late' => $filledAttendances->where('is_late', true)->count(),
+            'overtime_mins' => $filledAttendances->sum('verified_lembur_minutes'),
+            'total_days' => $filledAttendances->count(),
+        ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.attendance_report', [
-            'data' => $data,
+            'data' => [[
+                'employee' => $employee,
+                'attendances' => $filledAttendances,
+                'summary' => $summary
+            ]],
             'tanggalStart' => $tanggalStart,
             'tanggalEnd' => $tanggalEnd,
         ])->setPaper('A4', 'portrait');
@@ -184,26 +272,126 @@ class AttendanceController extends Controller
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        $groupedAttendances = $attendances->groupBy('employee_id');
+        $holidays = \App\Models\Holiday::whereBetween('date', [$tanggalStart, $tanggalEnd])->pluck('name', 'date');
 
-        // Prepare data with summaries
+        $allLeaves = \App\Models\LeaveRequest::with('leaveType')
+            ->where('status', 'approved')
+            ->where(function ($q) use ($tanggalStart, $tanggalEnd) {
+                $q->where(function ($q) use ($tanggalStart, $tanggalEnd) {
+                    $q->where('tanggal_mulai', '<=', $tanggalStart)
+                      ->where('tanggal_selesai', '>=', $tanggalStart);
+                })->orWhere(function ($q) use ($tanggalStart, $tanggalEnd) {
+                    $q->where('tanggal_mulai', '<=', $tanggalEnd)
+                      ->where('tanggal_selesai', '>=', $tanggalEnd);
+                })->orWhere(function ($q) use ($tanggalStart, $tanggalEnd) {
+                    $q->where('tanggal_mulai', '>=', $tanggalStart)
+                      ->where('tanggal_selesai', '<=', $tanggalEnd);
+                });
+            })
+            ->get();
+        $dateRange = [];
+        $currentDate = Carbon::parse($tanggalStart);
+        $endDate = Carbon::parse($tanggalEnd);
+        while ($currentDate <= $endDate) {
+            $dateRange[] = $currentDate->format('Y-m-d');
+            $currentDate->addDay();
+        }
+
+        $employees = Employee::with(['department', 'position', 'shift', 'workLocation'])
+            ->whereHas('attendances', function($q) use ($tanggalStart, $tanggalEnd) {
+                if ($tanggalStart) $q->where('tanggal', '>=', $tanggalStart);
+                if ($tanggalEnd) $q->where('tanggal', '<=', $tanggalEnd);
+            })
+            ->orWhereIn('id', $attendances->pluck('employee_id')->unique())
+            ->get();
+
+        // Handle case where we filter by specific employee
+        if ($search) {
+            $employees = Employee::with(['department', 'position', 'shift', 'workLocation'])
+                ->where(function($q) use ($search) {
+                    $q->where('nama', 'like', "%{$search}%")
+                      ->orWhere('nik', 'like', "%{$search}%");
+                })
+                ->get();
+        }
+
+        if ($workLocationId) {
+            $employees = $employees->where('work_location_id', $workLocationId);
+        }
+
         $data = [];
-        foreach ($groupedAttendances as $employeeId => $atts) {
-            $employee = $atts->first()->employee;
+        foreach ($employees as $employee) {
+            $empAttendances = $attendances->where('employee_id', $employee->id)->mapWithKeys(function ($item) {
+                $dateStr = $item->tanggal instanceof Carbon ? $item->tanggal->format('Y-m-d') : Carbon::parse($item->tanggal)->format('Y-m-d');
+                return [$dateStr => $item];
+            });
+            $filledAttendances = [];
             
+            foreach ($dateRange as $date) {
+                if ($empAttendances->has($date)) {
+                    $filledAttendances[] = $empAttendances->get($date);
+                } else {
+                    $carbonDate = Carbon::parse($date);
+                    $status = 'alpha';
+                    $isHoliday = false;
+                    $notes = '';
+
+                    if ($holidays->has($date)) {
+                        $status = 'libur';
+                        $isHoliday = true;
+                        $notes = $holidays->get($date);
+                    } else {
+                        $empLeaves = $allLeaves->where('employee_id', $employee->id);
+                        $leaveOnDate = $empLeaves->first(function ($l) use ($date) {
+                            return $date >= $l->tanggal_mulai->format('Y-m-d') && $date <= $l->tanggal_selesai->format('Y-m-d');
+                        });
+
+                        if ($leaveOnDate) {
+                            $typeName = strtolower($leaveOnDate->leaveType->name);
+                            if (str_contains($typeName, 'sakit')) $status = 'sakit';
+                            elseif (str_contains($typeName, 'izin')) $status = 'izin';
+                            else $status = 'cuti';
+                            $notes = $leaveOnDate->alasan;
+                        } elseif ($carbonDate->isWeekend()) {
+                            $status = 'off';
+                        }
+                    }
+
+                    $att = new Attendance([
+                        'tanggal' => $date,
+                        'status' => $status,
+                        'clock_in' => null,
+                        'clock_out' => null,
+                        'early_in_minutes' => 0,
+                        'late_in_minutes' => 0,
+                        'early_out_minutes' => 0,
+                        'late_out_minutes' => 0,
+                        'is_late' => false,
+                        'is_holiday' => $isHoliday,
+                        'notes' => $notes,
+                        'verified_lembur_minutes' => 0
+                    ]);
+                    $att->setRelation('employee', $employee);
+                    $filledAttendances[] = $att;
+                }
+            }
+
+            $filledAttendances = collect($filledAttendances);
+
             $data[] = [
                 'employee' => $employee,
-                'attendances' => $atts,
+                'attendances' => $filledAttendances,
                 'summary' => [
-                    'hadir' => $atts->where('status', 'hadir')->count(),
-                    'sakit' => $atts->where('status', 'sakit')->count(),
-                    'izin' => $atts->where('status', 'izin')->count(),
-                    'cuti' => $atts->where('status', 'cuti')->count(),
-                    'alpha' => $atts->where('status', 'alpha')->count(),
-                    'libur' => $atts->where('status', 'libur')->count(),
-                    'late' => $atts->where('is_late', true)->count(),
-                    'overtime_mins' => $atts->sum('verified_lembur_minutes'),
-                    'total_days' => $atts->count(),
+                    'hadir' => $filledAttendances->where('status', 'hadir')->count(),
+                    'sakit' => $filledAttendances->where('status', 'sakit')->count(),
+                    'izin' => $filledAttendances->where('status', 'izin')->count(),
+                    'cuti' => $filledAttendances->where('status', 'cuti')->count(),
+                    'alpha' => $filledAttendances->where('status', 'alpha')->count(),
+                    'libur' => $filledAttendances->where('status', 'libur')->count(),
+                    'off' => $filledAttendances->where('status', 'off')->count(),
+                    'late' => $filledAttendances->where('is_late', true)->count(),
+                    'overtime_mins' => $filledAttendances->sum('verified_lembur_minutes'),
+                    'total_days' => $filledAttendances->count(),
                 ]
             ];
         }

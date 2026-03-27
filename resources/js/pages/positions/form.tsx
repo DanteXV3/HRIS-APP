@@ -20,6 +20,11 @@ export default function PositionForm({ position, departments }: Props) {
         name: position?.name ?? '',
         department_id: position?.department_id?.toString() ?? '',
         grade: position?.grade ?? 'staff',
+        kpi_1: position?.kpi_1 ?? '',
+        kpi_2: position?.kpi_2 ?? '',
+        kpi_3: position?.kpi_3 ?? '',
+        kpi_4: position?.kpi_4 ?? '',
+        kpi_5: position?.kpi_5 ?? '',
     });
 
     function handleSubmit(e: React.FormEvent) {
@@ -64,6 +69,25 @@ export default function PositionForm({ position, departments }: Props) {
                             <option value="manager">Manager</option>
                         </select>
                         {errors.grade && <p className="mt-1 text-xs text-red-500">{errors.grade}</p>}
+                    </div>
+
+                    <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                        <h2 className="text-sm font-bold text-neutral-900 dark:text-white mb-4">Parameter KPI</h2>
+                        <div className="space-y-4">
+                            {[1, 2, 3, 4, 5].map((num) => (
+                                <div key={num}>
+                                    <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">Parameter {num}</label>
+                                    <textarea 
+                                        rows={2}
+                                        value={(data as any)[`kpi_${num}`]} 
+                                        onChange={e => setData(`kpi_${num}` as any, e.target.value)}
+                                        className="mt-1 block w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                        placeholder={`Masukkan indikator KPI ke-${num}...`} 
+                                    />
+                                    {(errors as any)[`kpi_${num}`] && <p className="mt-1 text-xs text-red-500">{(errors as any)[`kpi_${num}`]}</p>}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                     <div className="flex gap-3">
                         <button type="submit" disabled={processing}

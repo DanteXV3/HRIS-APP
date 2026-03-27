@@ -41,6 +41,10 @@ interface PayrollItem {
     potongan_lain_2: string;
     total_potongan: string;
     gaji_bersih: string;
+    employee_name: string | null;
+    employee_nik: string | null;
+    position_name: string | null;
+    department_name: string | null;
     employee: {
         id: number;
         nama: string;
@@ -110,7 +114,7 @@ function EditItemDialog({ payrollId, item, onClose }: { payrollId: number, item:
             <DialogContent className="max-w-4xl bg-white dark:bg-neutral-900 max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="border-b border-neutral-200 pb-4 dark:border-neutral-800">
                     <DialogTitle className="text-xl font-bold">Edit Rincian Gaji Manual</DialogTitle>
-                    <DialogDescription>Karyawan: {item.employee.nama} ({item.employee.nik})</DialogDescription>
+                    <DialogDescription>Karyawan: {item.employee_name || item.employee.nama} ({item.employee_nik || item.employee.nik})</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -299,10 +303,10 @@ export default function PayrollShow({ payroll }: Props) {
                                         return (
                                             <tr key={item.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
                                                 <td className="whitespace-nowrap px-6 py-4">
-                                                    <div className="font-medium text-neutral-900 dark:text-white">{item.employee.nama}</div>
+                                                    <div className="font-medium text-neutral-900 dark:text-white">{item.employee_name || item.employee.nama}</div>
                                                     <div className="text-xs text-neutral-500">
-                                                        {item.employee.nik} <br />
-                                                        {item.employee.position?.name} - {item.employee.department?.name}
+                                                        {item.employee_nik || item.employee.nik} <br />
+                                                        {item.position_name || item.employee.position?.name} - {item.department_name || item.employee.department?.name}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">{formatRupiah(item.gaji_pokok)}</td>
@@ -369,11 +373,11 @@ export default function PayrollShow({ payroll }: Props) {
                                 <h3 className="mb-2 font-bold text-neutral-900 dark:text-white">Informasi Karyawan</h3>
                                 <div className="grid grid-cols-2 gap-y-2 text-sm">
                                     <div className="text-neutral-500">Nama</div>
-                                    <div className="font-medium text-neutral-900 dark:text-white">{selectedItem.employee.nama}</div>
+                                    <div className="font-medium text-neutral-900 dark:text-white">{selectedItem.employee_name || selectedItem.employee.nama}</div>
                                     <div className="text-neutral-500">NIK</div>
-                                    <div className="font-medium text-neutral-900 dark:text-white">{selectedItem.employee.nik}</div>
+                                    <div className="font-medium text-neutral-900 dark:text-white">{selectedItem.employee_nik || selectedItem.employee.nik}</div>
                                     <div className="text-neutral-500">Posisi</div>
-                                    <div className="font-medium text-neutral-900 dark:text-white">{selectedItem.employee.position?.name || '-'} - {selectedItem.employee.department?.name || '-'}</div>
+                                    <div className="font-medium text-neutral-900 dark:text-white">{(selectedItem.position_name || selectedItem.employee.position?.name) || '-'} - {(selectedItem.department_name || selectedItem.employee.department?.name) || '-'}</div>
                                 </div>
                             </div>
 

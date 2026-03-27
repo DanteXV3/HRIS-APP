@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, Briefcase, LayoutGrid, MapPin, Users, Receipt, CalendarClock, FileText, DoorOpen } from 'lucide-react';
+import { Building2, Briefcase, LayoutGrid, MapPin, Users, Receipt, CalendarClock, FileText, DoorOpen, Edit3 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -29,6 +29,8 @@ export function AppSidebar() {
     const canManageShift = isAdmin || user?.can?.includes('shift.manage');
     const canManageLocation = isAdmin || user?.can?.includes('location.manage');
     const canViewWorkingLocation = isAdmin || user?.can?.includes('working_location.view');
+    const canManageHoliday = isAdmin || user?.can?.includes('holiday.manage');
+    const canManageCorrection = isAdmin || user?.can?.includes('attendance.correction.manage');
 
     const canCreateOvertime = isAdmin || user?.can?.includes('overtime.create');
     const canApproveOvertime = isAdmin || user?.can?.includes('overtime.first_approval') || user?.can?.includes('overtime.second_approval') || user?.can?.includes('overtime.view_all');
@@ -43,6 +45,8 @@ export function AppSidebar() {
         { title: 'Form Keluar', href: '/exit-permits', icon: DoorOpen },
     ];
 
+    tentangSayaItems.push({ title: 'Koreksi Absensi', href: '/attendance-corrections', icon: Edit3 });
+
     if (isAdmin || user?.can?.includes('pr.create')) {
         tentangSayaItems.push({ title: 'Payment Request', href: '/payment-requests', icon: Receipt });
     }
@@ -51,10 +55,19 @@ export function AppSidebar() {
         tentangSayaItems.push({ title: 'Form Lembur', href: '/overtimes', icon: CalendarClock });
     }
 
+    if (user?.can?.includes('kpi.view_own')) {
+        tentangSayaItems.push({ title: 'Evaluasi KPI', href: '/kpi-evaluations', icon: FileText });
+    }
+    
+    tentangSayaItems.push({ title: 'Surat Peringatan', href: '/warning-letters', icon: FileText });
+
     // 2. Management Karyawan
     const managementItems: NavItem[] = [];
     if (canViewEmployees) managementItems.push({ title: 'Data Karyawan', href: '/employees', icon: Users });
     if (canViewAttendance) managementItems.push({ title: 'Data Absensi', href: '/attendances', icon: CalendarClock });
+    if (canManageCorrection) managementItems.push({ title: 'Persetujuan Koreksi', href: '/attendance-corrections', icon: Edit3 });
+    if (isAdmin || user?.can?.includes('kpi.view_others')) managementItems.push({ title: 'Evaluasi KPI', href: '/kpi-evaluations', icon: FileText });
+    if (isAdmin || user?.can?.includes('sp.view_others')) managementItems.push({ title: 'Surat Peringatan', href: '/warning-letters', icon: FileText });
     if (canViewPayroll) managementItems.push({ title: 'Payroll & Slip Gaji', href: '/payrolls', icon: Receipt });
 
     // Add Administrative views for Leave, Exit Permits, and Overtime
@@ -81,6 +94,7 @@ export function AppSidebar() {
     if (canManageShift) settingItems.push({ title: 'Shift Kerja', href: '/shifts', icon: CalendarClock });
     if (canManageLocation) settingItems.push({ title: 'Data Perusahaan', href: '/work-locations', icon: Building2 });
     if (canViewWorkingLocation) settingItems.push({ title: 'Lokasi Kerja', href: '/working-locations', icon: MapPin });
+    if (canManageHoliday) settingItems.push({ title: 'Hari Libur', href: '/holidays', icon: CalendarClock });
 
     const mainNavItems: NavItem[] = [
         {

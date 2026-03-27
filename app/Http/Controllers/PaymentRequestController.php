@@ -284,7 +284,10 @@ class PaymentRequestController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.payment-request', ['pr' => $paymentRequest]);
         $pdf->setPaper('a4', 'landscape');
         
-        return $pdf->download("{$paymentRequest->pr_number}.pdf");
+        // Sanitize filename: replace / with - for compatibility
+        $safeFilename = str_replace('/', '-', $paymentRequest->pr_number);
+        
+        return $pdf->download("{$safeFilename}.pdf");
     }
 
     public function whatsappUrl(PaymentRequest $paymentRequest)
@@ -341,24 +344,22 @@ class PaymentRequestController extends Controller
 
     private function generatePrNumber(WorkLocation $company, Department $dept, \App\Models\WorkingLocation $workingLocation, string $dateString): string
     {
-        $companyCode = strtoupper($company->code);
-        $deptCode = strtoupper($dept->code);
-        $locationName = str_replace(' ', '', $workingLocation->name); // Remove spaces for the number
+        $companyCode = strtoupper($company->code ?? 'BBB'); 
+        $deptCode = strtoupper($dept->code ?? 'GA');
+        // For WorkingLocation name, take first 3 chars or use 'HDO' as default
+        $locationCode = strtoupper(substr(str_replace(' ', '', $workingLocation->name), 0, 3)); 
+        
         $date = \Carbon\Carbon::parse($dateString);
         $year = $date->year;
-        $month = $date->month;
+        $month = $date->format('m');
         
-        $romanMonths = [
-            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
-            7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
-        ];
-        $monthRoman = $romanMonths[$month];
-
-        $count = PaymentRequest::where('company_id', $company->id)
-            ->whereYear('date', $year)
+        // Count PRs for this year only to reset annually
+        $count = PaymentRequest::whereYear('date', $year)
             ->count() + 1;
+        
+        $formattedCount = str_pad($count, 3, '0', STR_PAD_LEFT);
 
-        return "PR/{$companyCode}-{$deptCode}/{$locationName}/{$count}/{$monthRoman}/{$year}";
+        return "PR-{$companyCode}.{$deptCode}-{$locationCode}-{$formattedCount}-{$month}-{$year}";
     }
 
     private function getCurrentApprovalLevel(PaymentRequest $pr): ?string

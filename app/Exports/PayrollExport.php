@@ -23,7 +23,7 @@ class PayrollExport implements WithMultipleSheets
 
         // Group items by Work Location (company)
         $groupedItems = $this->payroll->items->groupBy(function($item) {
-            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+            return $item->work_location_name ?? ($item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan');
         });
 
         foreach ($groupedItems as $companyName => $items) {

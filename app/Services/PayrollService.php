@@ -267,6 +267,15 @@ class PayrollService
         PayrollItem::create([
             'payroll_id' => $payroll->id,
             'employee_id' => $employee->id,
+            // Snapshot Data
+            'employee_name' => $employee->nama,
+            'employee_nik' => $employee->nik,
+            'department_name' => $employee->department ? $employee->department->name : null,
+            'position_name' => $employee->position ? $employee->position->name : null,
+            'work_location_name' => $employee->workLocation ? $employee->workLocation->name : null,
+            'working_location_name' => $employee->workingLocation ? $employee->workingLocation->name : null,
+            'bank_name' => $employee->nama_bank,
+            'bank_account_no' => $employee->no_rekening,
             // Earnings
             'gaji_pokok' => $earnings['gaji_pokok'],
             'tunjangan_jabatan' => $earnings['tunjangan_jabatan'],

@@ -4,13 +4,14 @@
     <meta charset="utf-8">
     <title>Payment Request - {{ $pr->pr_number }}</title>
     <style>
-        @page { margin: 18mm 15mm 15mm 15mm; size: A4 landscape; }
+        @page { margin: 0; size: A4 landscape; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif; 
             font-size: 10px; 
             color: #1a1a1a; 
             line-height: 1.3; 
+            padding: 1cm 1cm;
         }
 
         /* === HEADER (Letterhead) === */

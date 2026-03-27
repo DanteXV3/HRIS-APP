@@ -109,6 +109,16 @@ export default function Login({
                 </div>
             )}
 
+            <div className="mt-4 text-center">
+                <Link
+                    href="/face-attendance"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all text-sm"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13a3 3 0 1 0-6 0"/><path d="M12 9a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+                    Face Attendance
+                </Link>
+            </div>
+
         </AuthLayout>
     );
 }

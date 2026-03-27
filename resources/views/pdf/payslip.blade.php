@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Slip Gaji - {{ $item->employee->nama }}</title>
+    <title>Slip Gaji - {{ $item->employee_name ?? $item->employee->nama }}</title>
     <style>
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
@@ -161,7 +161,7 @@
             </td>
             <td style="width: 25%; text-align: right; vertical-align: middle;">
                 <div class="company-info">
-                    <strong>{{ $item->employee->workLocation?->name ?? 'Perusahaan' }}</strong><br>
+                    <strong>{{ $item->work_location_name ?? ($item->employee->workLocation?->name ?? 'Perusahaan') }}</strong><br>
                     {{ $item->employee->workLocation?->address }}
                 </div>
             </td>
@@ -173,15 +173,15 @@
             <table class="info-table">
                 <tr>
                     <td class="info-label">Nama</td>
-                    <td>: {{ $item->employee->nama }}</td>
+                    <td>: {{ $item->employee_name ?? $item->employee->nama }}</td>
                 </tr>
                 <tr>
                     <td class="info-label">NIK</td>
-                    <td>: {{ $item->employee->nik }}</td>
+                    <td>: {{ $item->employee_nik ?? $item->employee->nik }}</td>
                 </tr>
                 <tr>
                     <td class="info-label">Jabatan</td>
-                    <td>: {{ $item->employee->position?->name ?? '-' }}</td>
+                    <td>: {{ $item->position_name ?? ($item->employee->position?->name ?? '-') }}</td>
                 </tr>
             </table>
         </div>
@@ -189,7 +189,7 @@
             <table class="info-table">
                 <tr>
                     <td class="info-label">Departemen</td>
-                    <td>: {{ $item->employee->department?->name ?? '-' }}</td>
+                    <td>: {{ $item->department_name ?? ($item->employee->department?->name ?? '-') }}</td>
                 </tr>
                 <tr>
                     <td class="info-label">Status Pajak</td>
@@ -327,7 +327,7 @@
             Diterima Oleh,<br>
             Karyawan
             <div class="signature-line">
-                {{ $item->employee->nama }}
+                {{ $item->employee_name ?? $item->employee->nama }}
             </div>
         </div>
         <div class="signature-box" style="float: left;">

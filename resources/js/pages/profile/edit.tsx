@@ -2,6 +2,7 @@ import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import SignaturePad from '@/components/signature-pad';
+import FaceEnrollment from '@/components/attendance/face-enrollment';
 import type { BreadcrumbItem, Employee } from '@/types';
 
 interface Props {
@@ -216,6 +217,15 @@ export default function ProfileEdit() {
                         <div className="hidden lg:block"></div>
                         {renderInput("Nama Kontak 2", "nama_kontak_darurat_2")}
                         {renderInput("No. Telpon 2", "no_kontak_darurat_2")}
+                    </div>
+
+                    {/* Face Enrollment */}
+                    <div className="grid gap-6">
+                        <SectionTitle>🤳 Pendaftaran Wajah</SectionTitle>
+                        <FaceEnrollment 
+                            employeeId={employee.id} 
+                            hasDescriptor={!!employee.face_descriptor} 
+                        />
                     </div>
 
                     {/* Dokumen */}

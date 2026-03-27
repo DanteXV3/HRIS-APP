@@ -17,6 +17,14 @@ class PermissionSeeder extends Seeder
             ['name' => 'Can see others absensi', 'slug' => 'attendance.view_others', 'module' => 'Attendance'],
             ['name' => 'Can add others absensi', 'slug' => 'attendance.create_others', 'module' => 'Attendance'],
             ['name' => 'Can modify others absensi', 'slug' => 'attendance.edit_others', 'module' => 'Attendance'],
+            ['name' => 'Can manage attendance corrections', 'slug' => 'attendance.correction.manage', 'module' => 'Attendance'],
+
+            // KPI / Evaluation
+            ['name' => 'Can manage KPI parameters', 'slug' => 'kpi.manage_parameters', 'module' => 'KPI'],
+            ['name' => 'Can create KPI evaluation', 'slug' => 'kpi.create', 'module' => 'KPI'],
+            ['name' => 'Can evaluate subordinates', 'slug' => 'kpi.evaluate', 'module' => 'KPI'],
+            ['name' => 'Can view all KPI evaluations', 'slug' => 'kpi.view_others', 'module' => 'KPI'],
+            ['name' => 'Can view own KPI evaluation', 'slug' => 'kpi.view_own', 'module' => 'KPI'],
             
             // Leave
             ['name' => 'Can perform first approval for leave', 'slug' => 'leave.first_approval', 'module' => 'Leave'],
@@ -58,6 +66,11 @@ class PermissionSeeder extends Seeder
             ['name' => 'Can perform advisor approval for PR', 'slug' => 'pr.approve.advisor', 'module' => 'Payment Request'],
             ['name' => 'Can perform finance approval for PR', 'slug' => 'pr.approve.finance', 'module' => 'Payment Request'],
             ['name' => 'Can create PR', 'slug' => 'pr.create', 'module' => 'Payment Request'],
+
+            // Warning Letter (SP)
+            ['name' => 'Can view all warning letters', 'slug' => 'sp.view_others', 'module' => 'Warning Letter'],
+            ['name' => 'Can create warning letters', 'slug' => 'sp.create', 'module' => 'Warning Letter'],
+            ['name' => 'Can delete warning letters', 'slug' => 'sp.delete', 'module' => 'Warning Letter'],
         ];
 
         foreach ($permissions as $permission) {

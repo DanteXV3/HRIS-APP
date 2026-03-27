@@ -228,10 +228,14 @@ class PayrollController extends Controller
         if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
             abort(403);
         }
-        $payroll->load(['items.employee.workLocation']);
+        $payroll->load(['items.employee.workLocation', 'items.employee.workingLocation']);
         
         $groupedItems = $payroll->items->groupBy(function($item) {
-            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+            return $item->work_location_name ?? ($item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan');
+        })->map(function($companyItems) {
+            return $companyItems->groupBy(function($item) {
+                return $item->working_location_name ?? ($item->employee->workingLocation ? $item->employee->workingLocation->name : 'Tanpa Lokasi');
+            });
         });
 
         $pdf = Pdf::loadView('pdf.summary_thp', [
@@ -247,10 +251,14 @@ class PayrollController extends Controller
         if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
             abort(403);
         }
-        $payroll->load(['items.employee.workLocation']);
+        $payroll->load(['items.employee.workLocation', 'items.employee.workingLocation']);
         
         $groupedItems = $payroll->items->groupBy(function($item) {
-            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+            return $item->work_location_name ?? ($item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan');
+        })->map(function($companyItems) {
+            return $companyItems->groupBy(function($item) {
+                return $item->working_location_name ?? ($item->employee->workingLocation ? $item->employee->workingLocation->name : 'Tanpa Lokasi');
+            });
         });
 
         $pdf = Pdf::loadView('pdf.summary_uang_makan_lembur', [
@@ -266,10 +274,14 @@ class PayrollController extends Controller
         if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
             abort(403);
         }
-        $payroll->load(['items.employee.workLocation']);
+        $payroll->load(['items.employee.workLocation', 'items.employee.workingLocation']);
         
         $groupedItems = $payroll->items->groupBy(function($item) {
-            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+            return $item->work_location_name ?? ($item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan');
+        })->map(function($companyItems) {
+            return $companyItems->groupBy(function($item) {
+                return $item->working_location_name ?? ($item->employee->workingLocation ? $item->employee->workingLocation->name : 'Tanpa Lokasi');
+            });
         });
 
         $pdf = Pdf::loadView('pdf.summary_bpjs', [
@@ -285,10 +297,14 @@ class PayrollController extends Controller
         if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
             abort(403);
         }
-        $payroll->load(['items.employee.workLocation']);
+        $payroll->load(['items.employee.workLocation', 'items.employee.workingLocation']);
         
         $groupedItems = $payroll->items->groupBy(function($item) {
-            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+            return $item->work_location_name ?? ($item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan');
+        })->map(function($companyItems) {
+            return $companyItems->groupBy(function($item) {
+                return $item->working_location_name ?? ($item->employee->workingLocation ? $item->employee->workingLocation->name : 'Tanpa Lokasi');
+            });
         });
 
         $pdf = Pdf::loadView('pdf.summary_pph21', [
@@ -304,7 +320,7 @@ class PayrollController extends Controller
         if (!$request->user()->isAdmin() && !$request->user()->hasPermission('payroll.view')) {
             abort(403);
         }
-        $payroll->load(['items.employee.workLocation']);
+        $payroll->load(['items.employee.workLocation', 'items.employee.workingLocation']);
 
         // Since we didn't have the full summary stored in previous versions, we calculate it here
         foreach ($payroll->items as $item) {
@@ -343,7 +359,11 @@ class PayrollController extends Controller
         }
         
         $groupedItems = $payroll->items->groupBy(function($item) {
-            return $item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan';
+            return $item->work_location_name ?? ($item->employee->workLocation ? $item->employee->workLocation->name : 'Tanpa Perusahaan');
+        })->map(function($companyItems) {
+            return $companyItems->groupBy(function($item) {
+                return $item->working_location_name ?? ($item->employee->workingLocation ? $item->employee->workingLocation->name : 'Tanpa Lokasi');
+            });
         });
 
         $pdf = Pdf::loadView('pdf.report_attendance', [

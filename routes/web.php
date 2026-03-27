@@ -14,6 +14,7 @@ use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\ExitPermitController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\PaymentRequestController;
+use App\Http\Controllers\HolidayController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -21,6 +22,11 @@ Route::redirect('/', '/login')->name('home');
 
 // Public Attendance Verify (still public but logic will handle auth if needed or we can move it inside auth)
 Route::post('api/attendance/verify', [FaceAttendanceController::class, 'verify'])->name('attendance.verify')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// Public Face Attendance Kiosk
+Route::get('face-attendance', [FaceAttendanceController::class, 'kiosk'])->name('face-attendance.kiosk');
+Route::get('api/face-descriptors', [FaceAttendanceController::class, 'getDescriptors'])->name('face-attendance.descriptors');
+Route::post('api/face-attendance/verify', [FaceAttendanceController::class, 'publicVerify'])->name('face-attendance.verify')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
@@ -33,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('working-locations', WorkingLocationController::class)->except('show');
     Route::resource('positions', PositionController::class)->except('show');
     Route::resource('shifts', ShiftController::class)->except(['show', 'create', 'edit']);
+    Route::resource('holidays', HolidayController::class)->except(['show']);
     
     Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
     Route::resource('employees', EmployeeController::class);
@@ -58,6 +65,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('attendances/export-pdf', [AttendanceController::class, 'exportPdf'])->name('attendances.exportPdf');
     Route::post('attendances/import', [AttendanceController::class, 'import'])->name('attendances.import');
     Route::put('attendances/{attendance}', [AttendanceController::class, 'update'])->name('attendances.update');
+    // Attendance Corrections
+    Route::get('attendance-corrections', [\App\Http\Controllers\AttendanceCorrectionController::class, 'index'])->name('attendance-corrections.index');
+    Route::post('attendance-corrections', [\App\Http\Controllers\AttendanceCorrectionController::class, 'store'])->name('attendance-corrections.store');
+    Route::put('attendance-corrections/{correction}', [\App\Http\Controllers\AttendanceCorrectionController::class, 'update'])->name('attendance-corrections.update');
+    Route::delete('attendance-corrections/{correction}', [\App\Http\Controllers\AttendanceCorrectionController::class, 'destroy'])->name('attendance-corrections.destroy');
+
+    // KPI Evaluations
+    Route::resource('kpi-evaluations', \App\Http\Controllers\KpiEvaluationController::class);
+    Route::get('kpi-evaluations/{evaluation}/whatsapp', [\App\Http\Controllers\KpiEvaluationController::class, 'whatsappUrl'])->name('kpi-evaluations.whatsapp');
+    Route::get('kpi-evaluations/{evaluation}/pdf', [\App\Http\Controllers\KpiEvaluationController::class, 'downloadPdf'])->name('kpi-evaluations.pdf');
+
+    // Warning Letters (SP)
+    Route::resource('warning-letters', \App\Http\Controllers\WarningLetterController::class);
+    Route::get('warning-letters/{warningLetter}/pdf', [\App\Http\Controllers\WarningLetterController::class, 'downloadPdf'])->name('warning-letters.pdf');
+
     Route::delete('attendances/{attendance}', [AttendanceController::class, 'destroy'])->name('attendances.destroy');
 
     Route::get('payrolls/{payroll}/items/{item}/pdf', [PayrollController::class, 'downloadPdf'])->name('payrolls.pdf');
@@ -89,6 +111,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('profile', [EmployeeController::class, 'me'])->name('profile.me');
     Route::put('profile', [EmployeeController::class, 'updateMe'])->name('profile.update-me');
     Route::post('profile/signature', [EmployeeController::class, 'updateSignature'])->name('profile.signature');
+    Route::post('profile/face-descriptor', [EmployeeController::class, 'updateFaceDescriptor'])->name('profile.face-descriptor');
     Route::post('employees/{employee}/signature', [EmployeeController::class, 'updateSignature'])->name('employees.signature');
     Route::get('my-attendance', [AttendanceController::class, 'myAttendance'])->name('attendances.me');
     Route::get('my-attendance/pdf', [AttendanceController::class, 'myAttendancePdf'])->name('attendances.me.pdf');

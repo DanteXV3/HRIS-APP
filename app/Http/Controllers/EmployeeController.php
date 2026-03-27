@@ -490,4 +490,22 @@ class EmployeeController extends Controller
 
         return redirect()->back()->with('success', 'Tanda tangan berhasil diperbarui.');
     }
+
+    public function updateFaceDescriptor(Request $request)
+    {
+        $employee = $request->user()->employee;
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => 'Data karyawan tidak ditemukan.'], 404);
+        }
+
+        $request->validate([
+            'descriptor' => 'required|string',
+        ]);
+
+        $employee->update([
+            'face_descriptor' => $request->descriptor
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Wajah berhasil didaftarkan.']);
+    }
 }

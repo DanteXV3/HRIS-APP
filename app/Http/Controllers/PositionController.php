@@ -52,6 +52,11 @@ class PositionController extends Controller
             'name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'grade' => 'required|in:staff,supervisor,manager',
+            'kpi_1' => 'nullable|string|max:255',
+            'kpi_2' => 'nullable|string|max:255',
+            'kpi_3' => 'nullable|string|max:255',
+            'kpi_4' => 'nullable|string|max:255',
+            'kpi_5' => 'nullable|string|max:255',
         ]);
 
         Position::create($validated);
@@ -80,6 +85,11 @@ class PositionController extends Controller
             'name' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'grade' => 'required|in:staff,supervisor,manager',
+            'kpi_1' => 'nullable|string|max:255',
+            'kpi_2' => 'nullable|string|max:255',
+            'kpi_3' => 'nullable|string|max:255',
+            'kpi_4' => 'nullable|string|max:255',
+            'kpi_5' => 'nullable|string|max:255',
         ]);
 
         $position->update($validated);
