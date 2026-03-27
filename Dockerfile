@@ -20,13 +20,6 @@ FROM serversideup/php:8.2-fpm-nginx-alpine
 ENV PHP_OPCACHE_ENABLE=1
 
 USER root
-# Install system dependencies (ServerSideUp images already have most standard PHP extensions, 
-# but we add a few extra typical ones just in case)
-RUN apk add --no-cache \
-    tzdata \
-    && cp /usr/share/zoneinfo/Asia/Jakarta /etc/localtime \
-    && echo "Asia/Jakarta" > /etc/timezone \
-    && apk del tzdata
 
 # Set working directory
 WORKDIR /var/www/html
