@@ -66,6 +66,22 @@ services:
     networks:
       - hris-network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: hris-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80" # Exposed to host on 8080. NPM can proxy this too.
+    environment:
+      PMA_HOST: db
+      PMA_USER: '${DB_USERNAME}'
+      PMA_PASSWORD: '${DB_PASSWORD}'
+      UPLOAD_LIMIT: 100M
+    depends_on:
+      - db
+    networks:
+      - hris-network
+
 networks:
   hris-network:
     driver: bridge
