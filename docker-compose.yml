@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hris-app:latest
+    container_name: hris-app
+    restart: unless-stopped
+    ports:
+      - "9000:8080" # Exposed to host on 9000. NPM will point to this.
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - hris-network
+
+  queue:
+    image: hris-app:latest
+    container_name: hris-queue
+    restart: unless-stopped
+    # The serversideup image natively supports passing artisan commands
+    command: php artisan queue:work --tries=3 --timeout=90
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - hris-network
+      
+  scheduler:
+    image: hris-app:latest
+    container_name: hris-scheduler
+    restart: unless-stopped
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - hris-network
+
+  db:
+    image: mysql:8.0
+    container_name: hris-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    volumes:
+      - hris-mysql-data:/var/lib/mysql
+    networks:
+      - hris-network
+
+networks:
+  hris-network:
+    driver: bridge
+
+volumes:
+  hris-mysql-data:
