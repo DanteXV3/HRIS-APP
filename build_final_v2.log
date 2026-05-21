@@ -1,0 +1,287 @@
+time="2026-04-01T07:48:08Z" level=warning msg="/opt/hris/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Image hris-app:latest Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 459B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2.42kB done
+#2 DONE 0.1s
+
+#3 [internal] load metadata for docker.io/library/composer:2
+#3 DONE 0.5s
+
+#4 [internal] load metadata for docker.io/serversideup/php:8.2-fpm-nginx-alpine
+#4 DONE 1.7s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.1s
+
+#6 [internal] load build context
+#6 DONE 0.0s
+
+#7 [vendor-builder 1/5] FROM docker.io/library/composer:2@sha256:743aebe48ca67097c36819040633ea77e44a561eca135e4fc84c002e63a1ba07
+#7 resolve docker.io/library/composer:2@sha256:743aebe48ca67097c36819040633ea77e44a561eca135e4fc84c002e63a1ba07
+#7 resolve docker.io/library/composer:2@sha256:743aebe48ca67097c36819040633ea77e44a561eca135e4fc84c002e63a1ba07 0.6s done
+#7 DONE 0.7s
+
+#8 [node-builder 1/8] FROM docker.io/serversideup/php:8.2-fpm-nginx-alpine@sha256:e81d3d72698a6acd1b60e539e0f308717740b11ea21778a2535d7a33bcedcff5
+#8 resolve docker.io/serversideup/php:8.2-fpm-nginx-alpine@sha256:e81d3d72698a6acd1b60e539e0f308717740b11ea21778a2535d7a33bcedcff5
+#8 resolve docker.io/serversideup/php:8.2-fpm-nginx-alpine@sha256:e81d3d72698a6acd1b60e539e0f308717740b11ea21778a2535d7a33bcedcff5 0.6s done
+#8 DONE 0.8s
+
+#6 [internal] load build context
+#6 transferring context: 8.81MB 2.1s done
+#6 DONE 2.6s
+
+#9 [vendor-builder 3/5] COPY composer.json composer.lock ./
+#9 CACHED
+
+#10 [vendor-builder 2/5] WORKDIR /app
+#10 CACHED
+
+#11 [vendor-builder 4/5] RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs --no-scripts
+#11 CACHED
+
+#12 [vendor-builder 5/5] COPY . .
+#12 DONE 107.4s
+
+#13 [stage-2 2/7] RUN install-php-extensions gd
+#13 CACHED
+
+#14 [stage-2 3/7] WORKDIR /var/www/html
+#14 CACHED
+
+#15 [node-builder 2/8] RUN apk add --no-cache nodejs npm
+#15 CACHED
+
+#16 [node-builder 3/8] WORKDIR /var/www/html
+#16 CACHED
+
+#17 [node-builder 4/8] COPY --from=vendor-builder --chown=www-data:www-data /app /var/www/html
+#17 ...
+
+#18 [stage-2 4/7] COPY --from=vendor-builder --chown=www-data:www-data /app /var/www/html
+#18 ...
+
+#17 [node-builder 4/8] COPY --from=vendor-builder --chown=www-data:www-data /app /var/www/html
+#17 DONE 121.0s
+
+#18 [stage-2 4/7] COPY --from=vendor-builder --chown=www-data:www-data /app /var/www/html
+#18 DONE 121.0s
+
+#19 [node-builder 5/8] RUN rm -rf bootstrap/cache/*.php
+#19 DONE 4.3s
+
+#20 [node-builder 6/8] RUN cp .env.example .env && php artisan key:generate
+#20 1.372 [01-Apr-2026 07:52:15 UTC] PHP Warning:  The use statement with non-compound name 'Throwable' has no effect in /var/www/html/bootstrap/app.php on line 11
+#20 1.560 
+#20 1.560    INFO  Application key set successfully.  
+#20 1.560 
+#20 DONE 2.8s
+
+#21 [node-builder 7/8] RUN npm install --legacy-peer-deps
+#21 2.704 npm warn Unknown project config "public-hoist-pattern". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+#21 12.22 npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+#21 12.78 npm warn deprecated source-map@0.8.0-beta.0: The work that was done in this beta branch won't be included in future versions
+#21 13.60 npm warn deprecated glob@11.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+#21 31.96 
+#21 31.96 added 188 packages, removed 5 packages, and audited 695 packages in 30s
+#21 31.96 
+#21 31.96 173 packages are looking for funding
+#21 31.96   run `npm fund` for details
+#21 31.97 
+#21 31.97 6 vulnerabilities (1 moderate, 5 high)
+#21 31.97 
+#21 31.97 To address issues that do not require attention, run:
+#21 31.97   npm audit fix
+#21 31.97 
+#21 31.97 To address all issues (including breaking changes), run:
+#21 31.97   npm audit fix --force
+#21 31.97 
+#21 31.97 Run `npm audit` for details.
+#21 DONE 45.7s
+
+#22 [node-builder 8/8] RUN npm run build
+#22 4.594 npm warn Unknown project config "public-hoist-pattern". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+#22 4.619 
+#22 4.619 > build
+#22 4.619 > vite build
+#22 4.619 
+#22 5.203 vite v7.3.1 building client environment for production...
+#22 8.917 transforming...
+#22 22.55 ✓ 3630 modules transformed.
+#22 23.88 rendering chunks...
+#22 25.87 computing gzip size...
+#22 27.17 public/build/manifest.webmanifest                            0.41 kB
+#22 27.17 public/build/manifest.json                                  45.37 kB │ gzip:   4.05 kB
+#22 27.17 public/build/assets/app-ZwtWXbVI.css                       152.86 kB │ gzip:  22.73 kB
+#22 27.17 public/build/assets/check-BwcSFPdb.js                        0.13 kB │ gzip:   0.15 kB
+#22 27.17 public/build/assets/chevron-down-b5WdtBx4.js                 0.14 kB │ gzip:   0.15 kB
+#22 27.17 public/build/assets/chevron-left-CnACht9B.js                 0.14 kB │ gzip:   0.15 kB
+#22 27.17 public/build/assets/loader-circle-3K6oQ4Ay.js                0.16 kB │ gzip:   0.16 kB
+#22 27.17 public/build/assets/message-circle-CJuGuW4i.js               0.16 kB │ gzip:   0.17 kB
+#22 27.17 public/build/assets/plus-DjgWr4Ml.js                         0.17 kB │ gzip:   0.16 kB
+#22 27.17 public/build/assets/arrow-left-Dgt3YjEP.js                   0.18 kB │ gzip:   0.17 kB
+#22 27.17 public/build/assets/search-CKz4MY0O.js                       0.18 kB │ gzip:   0.18 kB
+#22 27.17 public/build/assets/circle-check-7599o6bh.js                 0.18 kB │ gzip:   0.18 kB
+#22 27.17 public/build/assets/clock-DjI5_i4u.js                        0.19 kB │ gzip:   0.18 kB
+#22 27.17 public/build/assets/circle-check-big-BN9ZIDrG.js             0.20 kB │ gzip:   0.19 kB
+#22 27.17 public/build/assets/user-KB_Lg0me.js                         0.20 kB │ gzip:   0.19 kB
+#22 27.17 public/build/assets/input-error-BiZco1hg.js                  0.20 kB │ gzip:   0.18 kB
+#22 27.17 public/build/assets/info-BfgA6e8-.js                         0.21 kB │ gzip:   0.18 kB
+#22 27.17 public/build/assets/circle-x-CfuXh2If.js                     0.21 kB │ gzip:   0.19 kB
+#22 27.17 public/build/assets/index-1Ptyd-UO.js                        0.23 kB │ gzip:   0.17 kB
+#22 27.17 public/build/assets/spinner-ieGfKeKQ.js                      0.24 kB │ gzip:   0.20 kB
+#22 27.17 public/build/assets/pen-Cw8DPGfK.js                          0.25 kB │ gzip:   0.21 kB
+#22 27.17 public/build/assets/circle-alert-BIObM1Qk.js                 0.26 kB │ gzip:   0.20 kB
+#22 27.17 public/build/assets/external-link-BHGVMkU1.js                0.26 kB │ gzip:   0.21 kB
+#22 27.17 public/build/assets/eye-Ccc-q3p4.js                          0.26 kB │ gzip:   0.21 kB
+#22 27.17 public/build/assets/user-check-CfJre6BE.js                   0.27 kB │ gzip:   0.23 kB
+#22 27.17 public/build/assets/upload-TYvlEBRA.js                       0.27 kB │ gzip:   0.22 kB
+#22 27.17 public/build/assets/calendar-B9fTCHk_.js                     0.27 kB │ gzip:   0.21 kB
+#22 27.17 public/build/assets/download-TaR0La3d.js                     0.27 kB │ gzip:   0.23 kB
+#22 27.17 public/build/assets/paperclip-XFw74e1L.js                    0.31 kB │ gzip:   0.24 kB
+#22 27.17 public/build/assets/text-link-pGm6tQ5d.js                    0.33 kB │ gzip:   0.24 kB
+#22 27.17 public/build/assets/printer-BXQIE1v_.js                      0.33 kB │ gzip:   0.24 kB
+#22 27.17 public/build/assets/square-pen-QD6mAw2F.js                   0.33 kB │ gzip:   0.25 kB
+#22 27.17 public/build/assets/shield-check-C1qmXR1n.js                 0.33 kB │ gzip:   0.26 kB
+#22 27.17 public/build/assets/save-BLN9FyqU.js                         0.34 kB │ gzip:   0.24 kB
+#22 27.17 public/build/assets/trash-2-CYtsnO0z.js                      0.37 kB │ gzip:   0.26 kB
+#22 27.17 public/build/assets/index-CGd3INs6.js                        0.37 kB │ gzip:   0.22 kB
+#22 27.17 public/build/assets/file-spreadsheet-B3JiMQI1.js             0.39 kB │ gzip:   0.24 kB
+#22 27.17 public/build/assets/index-Chc1RpuM.js                        0.47 kB │ gzip:   0.34 kB
+#22 27.17 public/build/assets/label-BwHujIX-.js                        0.62 kB │ gzip:   0.40 kB
+#22 27.17 public/build/assets/pagination-qoBa6cQR.js                   0.64 kB │ gzip:   0.43 kB
+#22 27.17 public/build/assets/card-BFYJLX_6.js                         0.76 kB │ gzip:   0.30 kB
+#22 27.17 public/build/assets/input-h98t11JT.js                        0.79 kB │ gzip:   0.44 kB
+#22 27.17 public/build/assets/createLucideIcon-BW5jHN--.js             0.89 kB │ gzip:   0.55 kB
+#22 27.17 public/build/assets/auth-layout-C5evZYys.js                  1.13 kB │ gzip:   0.48 kB
+#22 27.17 public/build/assets/verify-email-BQDuDgU4.js                 1.14 kB │ gzip:   0.64 kB
+#22 27.18 public/build/assets/password-input-BG_YjLfO.js               1.14 kB │ gzip:   0.65 kB
+#22 27.18 public/build/assets/confirm-password-BgLp8TJy.js             1.36 kB │ gzip:   0.69 kB
+#22 27.18 public/build/assets/index-B1VPp4we.js                        1.50 kB │ gzip:   0.52 kB
+#22 27.18 public/build/assets/forgot-password-CuVygc_r.js              1.66 kB │ gzip:   0.80 kB
+#22 27.18 public/build/assets/reset-password-CCpxWpkn.js               2.00 kB │ gzip:   0.80 kB
+#22 27.18 public/build/assets/two-factor-challenge-ShcukmW8.js         2.20 kB │ gzip:   1.04 kB
+#22 27.18 public/build/assets/appearance-Bpr27fxW.js                   2.20 kB │ gzip:   1.05 kB
+#22 27.18 public/build/assets/dialog-CV5BiT5h.js                       2.31 kB │ gzip:   0.85 kB
+#22 27.18 public/build/assets/form-BzqpH5j3.js                         2.44 kB │ gzip:   1.05 kB
+#22 27.18 public/build/assets/form-B-6LOwG5.js                         2.56 kB │ gzip:   0.96 kB
+#22 27.18 public/build/assets/index-Ct2roSCM.js                        2.76 kB │ gzip:   0.71 kB
+#22 27.18 public/build/assets/layout-CcETTlbg.js                       3.16 kB │ gzip:   1.28 kB
+#22 27.18 public/build/assets/index-LwZffpNl.js                        3.30 kB │ gzip:   0.98 kB
+#22 27.18 public/build/assets/create-BSlqleFv.js                       3.60 kB │ gzip:   1.20 kB
+#22 27.18 public/build/assets/index-HgpPfNAz.js                        3.64 kB │ gzip:   1.26 kB
+#22 27.18 public/build/assets/signature-pad-R6G-zNyH.js                3.80 kB │ gzip:   1.61 kB
+#22 27.18 public/build/assets/me-DHASGUJh.js                           4.19 kB │ gzip:   1.50 kB
+#22 27.18 public/build/assets/form-DmOKZfSa.js                         4.27 kB │ gzip:   1.29 kB
+#22 27.18 public/build/assets/app-logo-icon-DRbiFURa.js                4.64 kB │ gzip:   2.13 kB
+#22 27.18 public/build/assets/index-oY-FAeHp.js                        4.80 kB │ gzip:   1.48 kB
+#22 27.18 public/build/assets/me-CscP2la0.js                           5.19 kB │ gzip:   1.86 kB
+#22 27.18 public/build/assets/index-CZmEEoXs.js                        5.27 kB │ gzip:   1.86 kB
+#22 27.18 public/build/assets/index-CDcNt6fa.js                        5.29 kB │ gzip:   1.69 kB
+#22 27.18 public/build/assets/index-CwhfAdpO.js                        5.34 kB │ gzip:   1.69 kB
+#22 27.19 public/build/assets/index-BkCgqX9c.js                        5.48 kB │ gzip:   1.70 kB
+#22 27.19 public/build/assets/index-CZ6rzdTq.js                        5.70 kB │ gzip:   1.70 kB
+#22 27.19 public/build/assets/workbox-window.prod.es5-BIl4cyR9.js      5.76 kB │ gzip:   2.37 kB
+#22 27.19 public/build/assets/index-wd-cowHE.js                        5.98 kB │ gzip:   1.83 kB
+#22 27.19 public/build/assets/form-Bzw-_qY6.js                         6.16 kB │ gzip:   1.83 kB
+#22 27.19 public/build/assets/form-CkwFTTFV.js                         6.53 kB │ gzip:   2.07 kB
+#22 27.19 public/build/assets/create-Cq9d2djj.js                       6.87 kB │ gzip:   2.05 kB
+#22 27.19 public/build/assets/form-Do_wfxRK.js                         7.05 kB │ gzip:   1.84 kB
+#22 27.19 public/build/assets/index-8soqqv3a.js                        7.19 kB │ gzip:   2.46 kB
+#22 27.19 public/build/assets/index-CdmqNTWu.js                        7.21 kB │ gzip:   2.52 kB
+#22 27.19 public/build/assets/show-BxLL1qnS.js                         7.64 kB │ gzip:   2.35 kB
+#22 27.19 public/build/assets/index-CBjwkB8f.js                        7.81 kB │ gzip:   2.22 kB
+#22 27.19 public/build/assets/index-DFKHOnw5.js                        7.85 kB │ gzip:   2.34 kB
+#22 27.19 public/build/assets/index-DcBztNzZ.js                        7.89 kB │ gzip:   2.47 kB
+#22 27.19 public/build/assets/show-C-KvDXQt.js                         7.93 kB │ gzip:   2.10 kB
+#22 27.19 public/build/assets/show-C_RIBZA9.js                         8.02 kB │ gzip:   2.26 kB
+#22 27.19 public/build/assets/create-AuOj4OzS.js                       8.07 kB │ gzip:   2.38 kB
+#22 27.19 public/build/assets/corrections_index-BC_ROLMq.js            8.35 kB │ gzip:   2.47 kB
+#22 27.19 public/build/assets/face-attendance-0KUG2EVR.js              8.43 kB │ gzip:   3.11 kB
+#22 27.19 public/build/assets/show-BPqZj0hI.js                         8.73 kB │ gzip:   2.42 kB
+#22 27.19 public/build/assets/show-XHfH9CW6.js                         8.93 kB │ gzip:   2.11 kB
+#22 27.19 public/build/assets/index-DZZ4Yl1k.js                        9.68 kB │ gzip:   2.55 kB
+#22 27.19 public/build/assets/login-DM3r23iU.js                        9.90 kB │ gzip:   4.06 kB
+#22 27.19 public/build/assets/form-DYEbM2fH.js                        13.61 kB │ gzip:   3.57 kB
+#22 27.19 public/build/assets/profile-Di8woE5e.js                     13.96 kB │ gzip:   5.21 kB
+#22 27.19 public/build/assets/transition-iG6nCRD6.js                  14.34 kB │ gzip:   5.74 kB
+#22 27.19 public/build/assets/security-DRSQY6Ib.js                    14.98 kB │ gzip:   5.04 kB
+#22 27.19 public/build/assets/me-DxhI_cij.js                          15.25 kB │ gzip:   3.49 kB
+#22 27.19 public/build/assets/index-gBF5KvW8.js                       15.25 kB │ gzip:   3.75 kB
+#22 27.19 public/build/assets/use-two-factor-auth-DLdznhuU.js         15.38 kB │ gzip:   5.42 kB
+#22 27.19 public/build/assets/form-BZOxoXl0.js                        16.24 kB │ gzip:   3.76 kB
+#22 27.19 public/build/assets/show-COTrRbzJ.js                        16.27 kB │ gzip:   3.94 kB
+#22 27.19 public/build/assets/edit-CuPPEltH.js                        17.54 kB │ gzip:   5.29 kB
+#22 27.19 public/build/assets/dashboard-Bu2pFtFt.js                   19.41 kB │ gzip:   5.65 kB
+#22 27.19 public/build/assets/form-B9Pz8RVk.js                        20.30 kB │ gzip:   4.84 kB
+#22 27.19 public/build/assets/show-DrfjUVwt.js                        23.65 kB │ gzip:   5.38 kB
+#22 27.19 public/build/assets/id-BZEFkztJ.js                          25.17 kB │ gzip:   6.71 kB
+#22 27.19 public/build/assets/index-CtKIfbmE.js                       29.97 kB │ gzip:   5.98 kB
+#22 27.19 public/build/assets/create-DBxvnc0F.js                      31.37 kB │ gzip:  10.30 kB
+#22 27.19 public/build/assets/welcome-Bd7r1vBF.js                     47.92 kB │ gzip:   8.72 kB
+#22 27.19 public/build/assets/app-layout-EJbZyyEu.js                  97.82 kB │ gzip:  26.99 kB
+#22 27.19 public/build/assets/app-mcXu7CGH.js                        481.35 kB │ gzip: 155.14 kB
+#22 27.19 public/build/assets/face-api.esm-D0myQGyQ.js             1,319.81 kB │ gzip: 337.39 kB
+#22 27.20 
+#22 27.20 (!) Some chunks are larger than 500 kB after minification. Consider:
+#22 27.20 - Using dynamic import() to code-split the application
+#22 27.20 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+#22 27.20 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#22 27.20 ✓ built in 21.95s
+#22 32.47 
+#22 32.47 PWA v0.21.2
+#22 32.47 Building resources/js/sw.js service worker ("es" format)...
+#22 32.52 vite v7.3.1 building client environment for production...
+#22 32.54 transforming...
+#22 32.87 ✓ 53 modules transformed.
+#22 32.89 rendering chunks...
+#22 32.89 computing gzip size...
+#22 32.90 public/sw.mjs  16.51 kB │ gzip: 5.61 kB
+#22 32.90 ✓ built in 364ms
+#22 33.01 
+#22 33.01 PWA v0.21.2
+#22 33.01 mode      injectManifest
+#22 33.01 format:   es
+#22 33.01 precache  111 entries (2606.38 KiB)
+#22 33.01 files generated
+#22 33.01   public/sw.js
+#22 DONE 42.4s
+
+#23 [stage-2 5/7] COPY --from=node-builder --chown=www-data:www-data /var/www/html/public/build /var/www/html/public/build
+#23 DONE 4.4s
+
+#24 [stage-2 6/7] COPY --from=node-builder --chown=www-data:www-data /var/www/html/resources /var/www/html/resources
+#24 DONE 4.0s
+
+#25 [stage-2 7/7] RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+#25 DONE 9.3s
+
+#26 exporting to image
+#26 exporting layers
+#26 exporting layers 26.7s done
+#26 exporting manifest sha256:17d95e3d7f90a285790a53bfabf6b705421f239e9c823aeba7a0dab0ab3afe2b
+#26 exporting manifest sha256:17d95e3d7f90a285790a53bfabf6b705421f239e9c823aeba7a0dab0ab3afe2b 0.3s done
+#26 exporting config sha256:b3947af405bbe85fbab75d18e5bdca73199db6d6f71cb8b46a6b67aed73c9254
+#26 exporting config sha256:b3947af405bbe85fbab75d18e5bdca73199db6d6f71cb8b46a6b67aed73c9254 0.4s done
+#26 exporting attestation manifest sha256:ee70ac55ec10e1f3f50359bef583d05bab9a9bf3067cc3332342a3322ef7d9f4
+#26 exporting attestation manifest sha256:ee70ac55ec10e1f3f50359bef583d05bab9a9bf3067cc3332342a3322ef7d9f4 0.5s done
+#26 exporting manifest list sha256:fff2c665604cecb83b1298e630e26f56f5e9962b601ae5a8574cde13064dd86c
+#26 exporting manifest list sha256:fff2c665604cecb83b1298e630e26f56f5e9962b601ae5a8574cde13064dd86c 0.2s done
+#26 naming to docker.io/library/hris-app:latest
+#26 naming to docker.io/library/hris-app:latest 0.1s done
+#26 unpacking to docker.io/library/hris-app:latest
+#26 unpacking to docker.io/library/hris-app:latest 57.9s done
+#26 DONE 86.4s
+
+#27 resolving provenance for metadata file
+#27 DONE 0.0s
+ Image hris-app:latest Built 
+ Container hris-db Running 
+ Container hris-app Recreate 
+ Container hris-app Recreated 
+ Container hris-app Starting 
+ Container hris-app Started 
