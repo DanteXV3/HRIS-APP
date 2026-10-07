@@ -8,7 +8,7 @@ return [
      * @see https://tools.ietf.org/html/rfc8292
      */
     'vapid' => [
-        'subject' => env('VAPID_SUBJECT', 'mailto:admin@hris.bangunbejanabaja.com'),
+        'subject' => env('VAPID_SUBJECT', 'mailto:' . env('MAIL_FROM_ADDRESS', 'admin@example.com')),
         'public_key' => env('VAPID_PUBLIC_KEY'),
         'private_key' => env('VAPID_PRIVATE_KEY'),
         'pem_file' => env('VAPID_PEM_FILE'),

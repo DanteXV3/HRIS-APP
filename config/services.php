@@ -35,4 +35,7 @@ return [
         ],
     ],
 
+    'face_extraction' => [
+        'url' => env('FACE_EXTRACTION_URL', 'http://172.17.0.1:3000/api/extract'),
+    ],
 ];

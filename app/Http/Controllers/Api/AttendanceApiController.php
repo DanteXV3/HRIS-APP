@@ -105,28 +105,51 @@ class AttendanceApiController extends Controller
 
         if ($workingLocation) {
             $geofences = $workingLocation->geofences ?? [];
+            if (is_string($geofences)) {
+                $geofences = json_decode($geofences, true) ?: [];
+            }
+
             if (empty($geofences) && $workingLocation->latitude && $workingLocation->longitude) {
                 $geofences = [[
-                    'latitude' => $workingLocation->latitude,
-                    'longitude' => $workingLocation->longitude,
-                    'radius' => $workingLocation->radius ?? 200,
+                    'latitude' => (float) $workingLocation->latitude,
+                    'longitude' => (float) $workingLocation->longitude,
+                    'radius' => (float) ($workingLocation->radius ?? 200),
                 ]];
             }
 
             foreach ($geofences as $fence) {
+                $fenceArr = (array) $fence;
+                $fLat = (float) ($fenceArr['latitude'] ?? $fenceArr['lat'] ?? 0);
+                $fLng = (float) ($fenceArr['longitude'] ?? $fenceArr['lng'] ?? 0);
+                $fRad = (float) ($fenceArr['radius'] ?? $workingLocation->radius ?? 200);
+
+                if ($fLat != 0.0 && $fLng != 0.0) {
+                    $dist = $this->haversineDistance(
+                        (float) $request->latitude, (float) $request->longitude,
+                        $fLat, $fLng
+                    );
+                    if ($dist <= $fRad) {
+                        $withinGeofence = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$withinGeofence && $workingLocation->latitude && $workingLocation->longitude) {
                 $dist = $this->haversineDistance(
-                    $request->latitude, $request->longitude,
-                    $fence['latitude'], $fence['longitude']
+                    (float) $request->latitude, (float) $request->longitude,
+                    (float) $workingLocation->latitude, (float) $workingLocation->longitude
                 );
-                if ($dist <= ($fence['radius'] ?? 200)) {
+                if ($dist <= (float) ($workingLocation->radius ?? 200)) {
                     $withinGeofence = true;
-                    break;
                 }
             }
 
             if (!$withinGeofence) {
                 $geofenceMessage = 'Anda berada di luar area geofence. Absensi tetap dicatat dengan catatan.';
             }
+        } else {
+            $withinGeofence = true;
         }
 
         if ($request->type === 'in') {
@@ -135,6 +158,19 @@ class AttendanceApiController extends Controller
                 ->first();
 
             if ($existing && $existing->clock_in) {
+                if ($request->filled('remarks')) {
+                    $existingRemarks = $existing->remarks;
+                    $reqRemark = $request->remarks;
+                    $newRemarks = $existingRemarks 
+                        ? (str_contains($existingRemarks, $reqRemark) ? $existingRemarks : $existingRemarks . ' | ' . $reqRemark)
+                        : $reqRemark;
+                    $existing->update(['remarks' => $newRemarks]);
+                    return response()->json([
+                        'message' => 'Catatan presensi berhasil diperbarui.',
+                        'attendance' => $existing->fresh(),
+                        'within_geofence' => $withinGeofence,
+                    ]);
+                }
                 return response()->json(['message' => 'Anda sudah clock in hari ini.'], 422);
             }
 
@@ -180,13 +216,37 @@ class AttendanceApiController extends Controller
             }
 
             if ($attendance->clock_out) {
+                if ($request->filled('remarks')) {
+                    $existingRemarks = $attendance->remarks;
+                    $reqRemark = $request->remarks;
+                    $newRemarks = $existingRemarks 
+                        ? (str_contains($existingRemarks, $reqRemark) ? $existingRemarks : $existingRemarks . ' | ' . $reqRemark)
+                        : $reqRemark;
+                    $attendance->update(['remarks' => $newRemarks]);
+                    return response()->json([
+                        'message' => 'Catatan presensi berhasil diperbarui.',
+                        'attendance' => $attendance->fresh(),
+                        'within_geofence' => $withinGeofence,
+                    ]);
+                }
                 return response()->json(['message' => 'Anda sudah clock out.'], 422);
             }
+
+            $remarks = $request->remarks;
+            if (!$withinGeofence && $geofenceMessage) {
+                $remarks = ($remarks ? $remarks . ' | ' : '') . 'Di luar geofence';
+            }
+
+            $existingRemarks = $attendance->remarks;
+            $combinedRemarks = $existingRemarks 
+                ? ($remarks ? (str_contains($existingRemarks, $remarks) ? $existingRemarks : $existingRemarks . ' | ' . $remarks) : $existingRemarks)
+                : $remarks;
 
             $attendance->update([
                 'clock_out' => $now,
                 'clock_out_lat' => $request->latitude,
                 'clock_out_lng' => $request->longitude,
+                'remarks' => $combinedRemarks,
             ]);
 
             return response()->json([

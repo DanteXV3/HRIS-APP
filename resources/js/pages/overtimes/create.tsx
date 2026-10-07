@@ -24,7 +24,7 @@ export default function OvertimeCreate() {
         tanggal: new Date().toISOString().substring(0, 10),
         jam_mulai: '17:00',
         jam_berakhir: '19:00',
-        durasi: 2,
+        durasi: 2 as number | string,
         working_location_id: '' as number | string,
         keperluan: '',
     });
@@ -135,20 +135,40 @@ export default function OvertimeCreate() {
                         {errors.working_location_id && <p className="mt-1 text-xs text-red-500">{errors.working_location_id}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Jam Mulai <span className="text-red-500">*</span></label>
                             <input type="time" value={data.jam_mulai} onChange={e => setData('jam_mulai', e.target.value)} className={inputClass} required />
+                            {errors.jam_mulai && <p className="mt-1 text-xs text-red-500">{errors.jam_mulai}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Jam Berakhir <span className="text-red-500">*</span></label>
                             <input type="time" value={data.jam_berakhir} onChange={e => setData('jam_berakhir', e.target.value)} className={inputClass} required />
+                            {errors.jam_berakhir && <p className="mt-1 text-xs text-red-500">{errors.jam_berakhir}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Durasi <span className="text-red-500">*</span></label>
+                            <div className="relative mt-1">
+                                <input
+                                    type="number"
+                                    step="any"
+                                    min="0"
+                                    value={data.durasi}
+                                    onChange={e => setData('durasi', e.target.value)}
+                                    className="block w-full rounded-lg border border-neutral-300 pl-3 pr-12 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                                    placeholder="0"
+                                    required
+                                />
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <span className="text-xs font-semibold text-neutral-400">Jam</span>
+                                </div>
+                            </div>
+                            {errors.durasi && <p className="mt-1 text-xs text-red-500">{errors.durasi}</p>}
                         </div>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-neutral-500">Durasi: <span className="font-bold text-neutral-900 dark:text-white">{data.durasi} Jam</span></label>
-                    </div>
+                    <p className="-mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+                        Durasi terhitung otomatis dari jam mulai & berakhir, tetapi dapat diubah secara manual jika diperlukan.
+                    </p>
 
                     <div>
                         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Keperluan <span className="text-red-500">*</span></label>

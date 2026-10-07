@@ -399,7 +399,7 @@ class PaymentRequestController extends Controller
         $companyName = $paymentRequest->company->name;
         $locationName = $paymentRequest->workLocation->name ?? '-';
         $description = $paymentRequest->description;
-        $link = "https://hris.bangunbejanabaja.com/payment-requests/{$paymentRequest->id}";
+        $link = url("/payment-requests/{$paymentRequest->id}");
 
         $message = "Dear {$approverName}\n" .
                    "Mohon dibantu approval untuk\n\n" .

@@ -11,11 +11,14 @@ interface Props {
     isAdmin: boolean;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Form Lembur', href: '/overtimes' },
-    { title: 'Detail', href: '#' },
-];
+const getBreadcrumbs = (): BreadcrumbItem[] => {
+    const isManagement = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('from') === 'management';
+    return [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: isManagement ? 'Data Pengajuan Lembur' : 'Form Lembur', href: isManagement ? '/overtime-management' : '/overtimes' },
+        { title: 'Detail', href: '#' },
+    ];
+};
 
 export default function OvertimeShow() {
     const { overtime, canFirstApproval, canSecondApproval, isAdmin } = usePage<any>().props as unknown as Props;
@@ -53,12 +56,12 @@ export default function OvertimeShow() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={getBreadcrumbs()}>
             <Head title="Detail Pengajuan Lembur" />
             <div className="mx-auto max-w-2xl p-4 sm:p-6 lg:p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <Link href="/overtimes" className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        <Link href={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('from') === 'management' ? '/overtime-management' : '/overtimes'} className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
@@ -142,6 +145,8 @@ export default function OvertimeShow() {
                     {(overtime.status === 'pending' || overtime.status === 'partially_approved') && (
                         <a
                             href={`/overtimes/${overtime.id}/whatsapp-url`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2 w-full rounded-xl bg-green-500 px-6 py-3 text-sm font-bold text-white shadow-lg hover:bg-green-600 transition-all active:scale-[0.98]"
                         >
                             <MessageCircle className="w-5 h-5" /> Kirim WhatsApp ke Atasan

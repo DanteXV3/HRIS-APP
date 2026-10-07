@@ -27,8 +27,8 @@ export default function LeaveShow() {
     const { leaveRequest: lr, canFirstApproval, canSecondApproval, isAdmin } = usePage<{ props: Props }>().props as unknown as Props;
     const cfg = statusConfig[lr.status] || statusConfig.pending;
 
-    const isManagement = typeof window !== 'undefined' && document.referrer.includes('/leave-management');
-    const backUrl = typeof window !== 'undefined' && document.referrer.includes('/leave-management') ? '/leave-management' : '/leaves';
+    const isManagement = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('from') === 'management';
+    const backUrl = isManagement ? '/leave-management' : '/leaves';
 
     const dynamicBreadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/dashboard' },
@@ -153,6 +153,8 @@ export default function LeaveShow() {
                         {(lr.status === 'pending' || lr.status === 'partially_approved') && (
                             <a
                                 href={`/leaves/${lr.id}/whatsapp`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-600"
                             >
                                 <MessageCircle className="w-4 h-4" /> Kirim WhatsApp ke Atasan

@@ -92,4 +92,34 @@ class PayslipApiController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Download payslip PDF.
+     * GET /api/payslips/{payrollItem}/pdf
+     */
+    public function downloadPdf(Request $request, PayrollItem $payrollItem)
+    {
+        $user = $request->user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        if (!$employee || $payrollItem->employee_id !== $employee->id) {
+            return response()->json(['message' => 'Tidak diizinkan mengunduh slip gaji ini.'], 403);
+        }
+
+        $payrollItem->load(['payroll', 'employee.position', 'employee.department', 'employee.workLocation']);
+        
+        if ($payrollItem->payroll->status !== 'finalized') {
+            return response()->json(['message' => 'Slip gaji belum difinalisasi.'], 403);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.payslip', [
+            'payroll' => $payrollItem->payroll,
+            'item' => $payrollItem
+        ]);
+
+        $empName = str_replace(' ', '_', $payrollItem->employee->nama ?? 'Karyawan');
+        $fileName = "Slip_Gaji_{$empName}_{$payrollItem->payroll->periode}.pdf";
+
+        return $pdf->download($fileName);
+    }
 }

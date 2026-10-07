@@ -238,13 +238,19 @@ class LeaveRequestController extends Controller
             return back()->withErrors(['error' => 'Akun Anda belum terhubung dengan data karyawan.']);
         }
 
+        // Check if the selected leave type requires an attachment
+        $leaveTypeForValidation = LeaveType::find($request->input('leave_type_id'));
+        $attachmentRule = $leaveTypeForValidation && $leaveTypeForValidation->requires_attachment
+            ? 'required|file|max:5120'
+            : 'nullable|file|max:5120';
+
         $validated = $request->validate([
             'leave_type_id' => 'required|exists:leave_types,id',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'alasan' => 'required|string|max:1000',
             'yang_menggantikan' => 'nullable|string|max:255',
-            'attachment' => 'nullable|file|max:5120',
+            'attachment' => $attachmentRule,
         ]);
 
         // Check for overlapping requests
@@ -606,7 +612,7 @@ class LeaveRequestController extends Controller
                   "Status = {$status}\n" .
                   "Comment = {$comment}\n\n" .
                   "Silahkan klik link dibawah ini untuk membuka aplikasi anda.\n\n" .
-                  "https://hris.bangunbejanabaja.com/leaves/{$leave->id}";
+                  url("/leaves/{$leave->id}");
 
         $url = 'https://wa.me/' . $phone . '?text=' . urlencode($message);
 

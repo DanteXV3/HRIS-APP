@@ -166,6 +166,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('exit-permits', ExitPermitController::class)->only(['index', 'create', 'store']);
 
     // Overtime — all authenticated users
+    Route::get('overtime-management', [OvertimeController::class, 'management'])->name('overtimes.management');
     Route::resource('overtimes', OvertimeController::class)->only(['index', 'create', 'store', 'show'])->parameters(['overtimes' => 'overtime']);
     Route::post('overtimes/{overtime}/approve', [OvertimeController::class, 'approve'])->name('overtimes.approve');
     Route::post('overtimes/{overtime}/reject', [OvertimeController::class, 'reject'])->name('overtimes.reject');

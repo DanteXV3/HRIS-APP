@@ -113,7 +113,7 @@ export function AppSidebar() {
         managementItems.push({ title: 'Data Form Keluar', href: '/exit-permits', icon: DoorOpen });
     }
     if (canApproveOvertime) {
-        managementItems.push({ title: 'Data Pengajuan Lembur', href: '/overtimes', icon: CalendarClock });
+        managementItems.push({ title: 'Data Pengajuan Lembur', href: '/overtime-management', icon: CalendarClock });
     }
     if (canApprovePR) {
         managementItems.push({ title: 'Data Payment Request', href: '/payment-requests', icon: Receipt });

@@ -1,8 +1,81 @@
+# Dependencies (installed fresh inside the image)
 vendor
 node_modules
+
+# Version control
 .git
+.github
+.gitattributes
+.gitignore
+
+# Environment files
 .env
+
+# Laravel caches (regenerated at runtime)
 storage/*.php
 storage/logs
 bootstrap/cache/*.php
+
+# Built assets (rebuilt inside the image)
 public/build
+
+# Docker files (not needed inside the image)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Database dumps and seeds
+*.sql
+database_HRIS_seed.sql
+database_HRIS_utf8.sql
+SeedLeave.csv
+
+# Build and debug logs
+*.log
+build*.log
+build_log.txt
+tsc_*.txt
+
+# Debug and scratch scripts
+check_evals.php
+cleanup_evals.php
+debug_*.php
+fix_*.php
+read_excel*.php
+run_init_leave.php
+scratch_debug.php
+verify_fix.php
+test_carbon.php
+
+# Archives and binaries
+*.zip
+hris-deploy.zip
+
+# Images and documents (not app assets)
+*.pdf
+Joseph Sibuea.pdf
+image-1.png
+joseph-1.png
+
+# Keys and credentials
+*.pem
+vapid_private.pem
+vapid_public.pem
+id
+
+# Editor and tooling config
+.editorconfig
+.prettierrc
+.prettierignore
+.npmrc
+phpunit.xml
+pint.json
+eslint.config.js
+components.json
+
+# Firebase (mounted as volume in production, not baked in)
+firebase-auth.json
+google-services.json
+
+# Tests
+tests

@@ -1,0 +1,24 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('attendances', function (Blueprint $table) {
+            // Tracks when the last clock-out reminder was sent for this attendance record.
+            // Null = no reminder sent yet. Used by RemindClockOut to avoid spamming.
+            $table->timestamp('clock_out_reminder_sent_at')->nullable()->after('notes');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('attendances', function (Blueprint $table) {
+            $table->dropColumn('clock_out_reminder_sent_at');
+        });
+    }
+};

@@ -32,23 +32,30 @@ class PaymentRequestApiController extends Controller
             });
 
         // Visibility: Admin sees all. Others see only their own PRs + PRs pending their approval level.
-        if (!$user->isAdmin() && !$user->hasPermission('pr.view_all')) {
-            $approvalLevels = [];
-            $prApprovalSlugs = ['tax', 'accounting', 'cost_control', 'head_branch', 'director', 'commissioner', 'advisor', 'finance'];
-            foreach ($prApprovalSlugs as $level) {
-                if ($user->hasPermission("pr.approve.{$level}")) {
-                    $approvalLevels[] = $level;
-                }
-            }
+        $filter = $request->query('filter', 'created');
 
-            $query->where(function ($q) use ($employee, $approvalLevels) {
-                if ($employee) {
-                    $q->where('requested_by_id', $employee->id);
+        if ($filter === 'need_approval') {
+            $query->whereIn('status', ['pending', 'partially_approved']);
+            if (!$user->isAdmin() && !$user->hasPermission('pr.view_all')) {
+                $approvalLevels = [];
+                $prApprovalSlugs = ['tax', 'accounting', 'cost_control', 'head_branch', 'director', 'commissioner', 'advisor', 'finance'];
+                foreach ($prApprovalSlugs as $level) {
+                    if ($user->hasPermission("pr.approve.{$level}")) {
+                        $approvalLevels[] = $level;
+                    }
                 }
-                foreach ($approvalLevels as $level) {
-                    $q->orWhere("{$level}_status", 'pending');
-                }
-            });
+                $query->where(function ($q) use ($approvalLevels) {
+                    foreach ($approvalLevels as $level) {
+                        $q->orWhere("{$level}_status", 'pending');
+                    }
+                });
+            }
+        } elseif ($filter === 'completed') {
+            $query->whereIn('status', ['approved', 'rejected']);
+        } else {
+            if ($employee) {
+                $query->where('requested_by_id', $employee->id);
+            }
         }
 
         $prs = $query->orderBy('created_at', 'desc')->get()->map(fn($pr) => [
@@ -74,8 +81,17 @@ class PaymentRequestApiController extends Controller
      * Get PR detail with items and approval chain.
      * GET /api/payment-requests/{paymentRequest}
      */
-    public function show(PaymentRequest $paymentRequest)
+    public function show(Request $request, PaymentRequest $paymentRequest)
     {
+        $user = $request->user();
+        $currentLevel = $this->getCurrentApprovalLevel($paymentRequest);
+        $canApprove = false;
+
+        if ($currentLevel && in_array($paymentRequest->status, ['pending', 'partially_approved'])) {
+            if ($user && ($user->isAdmin() || $user->hasPermission("pr.approve.{$currentLevel}"))) {
+                $canApprove = true;
+            }
+        }
         $paymentRequest->load([
             'requestedBy', 'department', 'company', 'workLocation', 'items',
             'taxApprover', 'accountingApprover', 'costControlApprover',
@@ -128,6 +144,8 @@ class PaymentRequestApiController extends Controller
                     'amount' => $item->amount,
                 ]),
                 'approval_chain' => $approvalChain,
+                'can_approve' => $canApprove,
+                'current_approval_level' => $currentLevel,
                 'created_at' => $paymentRequest->created_at?->toIso8601String(),
             ],
         ]);

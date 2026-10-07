@@ -310,7 +310,8 @@ class PayrollController extends Controller
 
             // Application-level filtering
             $empAtts = $allAttendances->get($employee->id, collect())->filter(function($att) use ($attStartDate, $attEndDate) {
-                return $att->tanggal >= $attStartDate && $att->tanggal <= $attEndDate;
+                $tanggal = $att->tanggal->format('Y-m-d');
+                return $tanggal >= $attStartDate && $tanggal <= $attEndDate;
             });
 
             $item->attendance_summary = [

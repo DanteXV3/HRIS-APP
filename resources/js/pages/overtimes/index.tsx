@@ -9,15 +9,19 @@ interface Props {
     filters: { status?: string };
     userRole: string;
     currentEmployeeId: number;
+    pageType: 'personal' | 'management';
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Form Lembur', href: '/overtimes' },
-];
-
 export default function OvertimeIndex() {
-    const { overtimes, filters, userRole, currentEmployeeId } = usePage<any>().props as unknown as Props;
+    const { overtimes, filters, userRole, currentEmployeeId, pageType } = usePage<any>().props as unknown as Props;
+
+    const isManagement = pageType === 'management';
+    const baseUrl = isManagement ? '/overtime-management' : '/overtimes';
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: isManagement ? 'Data Pengajuan Lembur' : 'Form Lembur', href: baseUrl },
+    ];
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -34,16 +38,18 @@ export default function OvertimeIndex() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Form Lembur" />
+            <Head title={isManagement ? 'Data Pengajuan Lembur' : 'Form Lembur'} />
             <div className="flex flex-col gap-6 p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                             <Clock className="w-6 h-6 text-blue-600" />
-                            Form Lembur
+                            {isManagement ? 'Data Pengajuan Lembur Karyawan' : 'Form Lembur'}
                         </h1>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                            Kelola pengajuan lembur karyawan.
+                            {isManagement
+                                ? 'Kelola dan setujui pengajuan lembur dari tim Anda.'
+                                : 'Lihat riwayat pengajuan lembur Anda.'}
                         </p>
                     </div>
                     <Link
@@ -64,7 +70,7 @@ export default function OvertimeIndex() {
                     ].map((status) => (
                         <Link
                             key={status.value}
-                            href="/overtimes"
+                            href={baseUrl}
                             data={{ status: status.value }}
                             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                                 (filters.status || '') === status.value
@@ -113,7 +119,7 @@ export default function OvertimeIndex() {
                                          <td className="whitespace-nowrap px-4 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link
-                                                    href={`/overtimes/${overtime.id}`}
+                                                    href={`/overtimes/${overtime.id}${isManagement ? '?from=management' : ''}`}
                                                     className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
                                                     title="Detail"
                                                 >
@@ -122,6 +128,8 @@ export default function OvertimeIndex() {
                                                 {(overtime.status === 'pending' || overtime.status === 'partially_approved') && (
                                                     <a
                                                         href={`/overtimes/${overtime.id}/whatsapp-url`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
                                                         className="rounded-lg p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                                                         title="Kirim WhatsApp ke Atasan"
                                                     >

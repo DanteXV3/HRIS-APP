@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Payslips
     Route::get('payslips', [PayslipApiController::class, 'index']);
     Route::get('payslips/{payrollItem}', [PayslipApiController::class, 'show']);
+    Route::get('payslips/{payrollItem}/pdf', [PayslipApiController::class, 'downloadPdf']);
 
     // Approvals
     Route::get('approvals/pending', [ApprovalApiController::class, 'pending']);
@@ -77,6 +78,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('overtimes', [OvertimeApiController::class, 'index']);
     Route::post('overtimes', [OvertimeApiController::class, 'store']);
 
+    // Mobile Face Clock
+    Route::post('attendances/clock-mobile', [\App\Http\Controllers\Api\MobileAttendanceController::class, 'clockWithImage']);
+
     // Warning Letters
     Route::get('warning-letters', [WarningLetterApiController::class, 'index']);
 });
+
+    Route::post('leaves/{leaveRequest}/approve', [LeaveApiController::class, 'approve']);
+    Route::post('leaves/{leaveRequest}/reject', [LeaveApiController::class, 'reject']);
+    Route::post('overtimes/{overtime}/approve', [OvertimeApiController::class, 'approve']);
+    Route::post('overtimes/{overtime}/reject', [OvertimeApiController::class, 'reject']);

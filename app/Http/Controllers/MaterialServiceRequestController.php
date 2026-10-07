@@ -289,7 +289,7 @@ class MaterialServiceRequestController extends Controller
                    "Perusahaan = *{$msr->company->name}*\n" .
                    "Penempatan = *{$msr->workLocation->name}*\n" .
                    "Description = *{$msr->description}*\n\n" .
-                   "Link: https://hris.bangunbejanabaja.com/msr/{$msr->id}";
+                   "Link: " . url("/msr/{$msr->id}");
 
         return Inertia::location("https://api.whatsapp.com/send?phone={$phone}&text=" . urlencode($message));
     }

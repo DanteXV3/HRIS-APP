@@ -130,7 +130,7 @@ class TaskController extends Controller
                    "🔄 *Jenis:* {$typeLabel}\n\n" .
                    "Silahkan cek dashboard HRIS Anda untuk melihat detail tugas dan menandai jika sudah selesai.\n\n" .
                    "Buka link dibawah ini :\n" .
-                   "https://hris.bangunbejanabaja.com/dashboard";
+                   url('/dashboard');
 
         $url = 'https://wa.me/' . $phone . '?text=' . urlencode($message);
 

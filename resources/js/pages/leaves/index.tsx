@@ -289,12 +289,14 @@ export default function LeaveIndex() {
                                                 </td>
                                                 <td className="whitespace-nowrap px-4 py-3 text-center">
                                                     <div className="flex items-center justify-center gap-1">
-                                                        <Link href={`/leaves/${lr.id}`} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 dark:hover:bg-neutral-800" title="Detail">
+                                                        <Link href={`/leaves/${lr.id}${isManagement ? '?from=management' : ''}`} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 dark:hover:bg-neutral-800" title="Detail">
                                                             <Eye className="h-4 w-4" />
                                                         </Link>
                                                         {(lr.status === 'pending' || lr.status === 'partially_approved') && (
                                                             <a
                                                                 href={`/leaves/${lr.id}/whatsapp`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
                                                                 className="rounded-lg p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                                                                 title="Kirim WhatsApp ke Atasan"
                                                             >

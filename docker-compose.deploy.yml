@@ -1,0 +1,91 @@
+services:
+  app:
+    image: dantexv3/bangunpeople:latest
+    container_name: hris-app
+    restart: unless-stopped
+    ports:
+      - "9000:8080"
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+      - ./firebase-auth.json:/var/www/html/firebase-auth.json
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - hris-network
+
+  queue:
+    image: dantexv3/bangunpeople:latest
+    container_name: hris-queue
+    restart: unless-stopped
+    command: php artisan queue:work --tries=3 --timeout=90
+    healthcheck:
+      disable: true
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+      - ./firebase-auth.json:/var/www/html/firebase-auth.json
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - hris-network
+
+  scheduler:
+    image: dantexv3/bangunpeople:latest
+    container_name: hris-scheduler
+    restart: unless-stopped
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+    healthcheck:
+      disable: true
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+      - ./firebase-auth.json:/var/www/html/firebase-auth.json
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - hris-network
+
+  db:
+    image: mysql:8.0
+    container_name: hris-db
+    restart: unless-stopped
+    command: --innodb-use-native-aio=0
+    environment:
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+    volumes:
+      - hris-mysql-data:/var/lib/mysql
+    networks:
+      - hris-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: hris-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: '${DB_USERNAME}'
+      PMA_PASSWORD: '${DB_PASSWORD}'
+      UPLOAD_LIMIT: 100M
+    depends_on:
+      - db
+    networks:
+      - hris-network
+
+networks:
+  hris-network:
+    driver: bridge
+
+volumes:
+  hris-mysql-data:

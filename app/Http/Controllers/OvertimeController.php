@@ -14,7 +14,50 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class OvertimeController extends Controller
 {
+    /**
+     * Personal view: show only the current user's own overtime submissions.
+     */
     public function index(Request $request)
+    {
+        $user = Auth::user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return Inertia::render('overtimes/index', [
+                'overtimes' => Overtime::whereRaw('1=0')->paginate(15),
+                'filters' => $request->only('status'),
+                'userRole' => $user->role,
+                'currentEmployeeId' => null,
+                'pageType' => 'personal',
+            ]);
+        }
+
+        $query = Overtime::with(['creator', 'employees', 'approvedBySupervisor', 'approvedByManager', 'workingLocation'])
+            ->where(function ($q) use ($employee) {
+                $q->where('creator_id', $employee->id)
+                  ->orWhereHas('employees', function($sq) use ($employee) {
+                      $sq->where('employees.id', $employee->id);
+                  });
+            })
+            ->latest();
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return Inertia::render('overtimes/index', [
+            'overtimes' => $query->paginate(15)->withQueryString(),
+            'filters' => $request->only('status'),
+            'userRole' => $user->role,
+            'currentEmployeeId' => $employee->id,
+            'pageType' => 'personal',
+        ]);
+    }
+
+    /**
+     * Management view: show all overtimes based on approval permissions.
+     */
+    public function management(Request $request)
     {
         $user = Auth::user();
         $employee = $user->employee;
@@ -62,6 +105,7 @@ class OvertimeController extends Controller
             'filters' => $request->only('status'),
             'userRole' => $user->role,
             'currentEmployeeId' => $employee?->id,
+            'pageType' => 'management',
         ]);
     }
 
@@ -282,7 +326,7 @@ class OvertimeController extends Controller
                   "Status = {$status}\n" .
                   "Comment = {$comment}\n\n" .
                   "Silahkan klik link dibawah ini untuk membuka aplikasi anda.\n\n" .
-                  "https://hris.bangunbejanabaja.com/overtimes/{$overtime->id}";
+                  url("/overtimes/{$overtime->id}");
 
         $url = 'https://wa.me/' . $phone . '?text=' . urlencode($message);
 
